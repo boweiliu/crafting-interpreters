@@ -5,6 +5,7 @@ ugh also super annoying. the trick is to go to https://github.com/Kotlin/kmp-nat
 1. build.gradle.kts
 2. gradle/libs.versions.toml
 3. src/nativeMain/kotlin/Main.kt
+4. settings.gradle.kts // not sure if i needed to update this but seemed relevant
 
 and also disable all the jvm-targeting lines in your build.gradle.kts including `application`
 

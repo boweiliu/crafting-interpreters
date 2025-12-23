@@ -7,14 +7,14 @@
  */
 
 plugins {
-  // kotlin("jvm") version "2.3.0"
   alias(libs.plugins.kotlinMultiplatform)
   alias(libs.plugins.kotlinxSerialization)
+  // kotlin("jvm") version "2.3.0"
   // application
 }
 
-group = "org.example" // A company name, for example, `org.jetbrains`
-version = "1.0-SNAPSHOT" // Version to assign to the built artifact
+// group = "org.example" // A company name, for example, `org.jetbrains`
+// version = "1.0-SNAPSHOT" // Version to assign to the built artifact
 
 repositories { // Sources of dependencies. See 
     mavenCentral() // Maven Central Repository. See 
