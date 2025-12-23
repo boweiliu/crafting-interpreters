@@ -2,7 +2,11 @@
 
 this is insane... jetbrains 2025 docs are super unhelpful here.
 
-what I did:
+Slightly more helpful (but took a bit of searching): https://github.com/Kotlin/kmp-native-wizard
+
+---
+
+what I did, starting from scratch:
 
 1. install sdkman
 
