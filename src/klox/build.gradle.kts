@@ -69,3 +69,9 @@ kotlin {
     }
 }
 
+
+tasks.register<Exec>("shell") {
+  group = "custom"
+  executable = "/bin/bash"
+  args("-c", "echo i waws here")
+}

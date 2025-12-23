@@ -32,4 +32,12 @@ very tricky...
 
 trying  `./gradlew linkDebugTestNative` and then manually running?? the other approach using `gradlew nativeTest` doesnt have line numbers or debug.
 
+yeah that worked - `./build/bin/native/debugTest/test.kexe`
+
+
+## BLUF
+
+To run tests sanely: `./gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe`
+To run binary sanely: `./gradlew linkDebugExecutableNative  && ./build/bin/native/debugExecutable/KotlinNativeTemplate.kexe`
+
 

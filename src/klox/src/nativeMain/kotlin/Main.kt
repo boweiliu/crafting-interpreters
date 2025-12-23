@@ -1,3 +1,3 @@
 fun main() {
-  println("hello from native kotlin rebuild")
+  println("hello from native kotlin rebuild here")
 }
