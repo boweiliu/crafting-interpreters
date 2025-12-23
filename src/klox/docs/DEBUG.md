@@ -6,9 +6,9 @@ ugh also super annoying. the trick is to go to https://github.com/Kotlin/kmp-nat
 2. gradle/libs.versions.toml
 3. src/nativeMain/kotlin/Main.kt
 4. settings.gradle.kts // not sure if i needed to update this but seemed relevant
+5. change from `gradlew run` to `gradlew runDebugExecutableNative`
 
 and also disable all the jvm-targeting lines in your build.gradle.kts including `application`
-
 
 ### gdb
 
@@ -24,4 +24,12 @@ then do stuff like
 (gdb) break Main.kt:2
 (gdb) r
 ```
+
+
+### tests
+
+very tricky... 
+
+trying  `./gradlew linkDebugTestNative` and then manually running?? the other approach using `gradlew nativeTest` doesnt have line numbers or debug.
+
 
