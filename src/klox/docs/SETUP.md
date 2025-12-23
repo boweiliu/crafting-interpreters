@@ -16,25 +16,24 @@ what I did:
 
 ```
 plugins {
+  // needed for kotlin files
   kotlin("jvm") version "2.3.0"
+
+  // needed to be able to run the thing
+  application
 }
 
-group = "org.example" // A company name, for example, `org.jetbrains`
-version = "1.0-SNAPSHOT" // Version to assign to the built artifact
-
-repositories { // Sources of dependencies. See 
-    mavenCentral() // Maven Central Repository. See 
+repositories {
+    // needed for gradle to find its own deps
+    mavenCentral()
 }
 
-dependencies { // All the libraries you want to use. See 
-    // Copy dependencies' names after you find them in a repository
-    testImplementation(kotlin("test")) // The Kotlin test library
-}
-
-tasks.test { // See 
-    useJUnitPlatform() // JUnitPlatform for tests. See 
+application {
+    // needed to tell java where our main is
+    mainClass.set("MainKt")
 }
 ```
+
 3. `./gradlew`
 3. `./gradlew build`
 
