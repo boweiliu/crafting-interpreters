@@ -7,8 +7,10 @@
  */
 
 plugins {
-  kotlin("jvm") version "2.3.0"
-  application
+  // kotlin("jvm") version "2.3.0"
+  alias(libs.plugins.kotlinMultiplatform)
+  alias(libs.plugins.kotlinxSerialization)
+  // application
 }
 
 group = "org.example" // A company name, for example, `org.jetbrains`
@@ -18,15 +20,45 @@ repositories { // Sources of dependencies. See
     mavenCentral() // Maven Central Repository. See 
 }
 
-dependencies { // All the libraries you want to use. See 
-    // Copy dependencies' names after you find them in a repository
-    testImplementation(kotlin("test")) // The Kotlin test library
+// dependencies { // All the libraries you want to use. See 
+//     // Copy dependencies' names after you find them in a repository
+//     testImplementation(kotlin("test")) // The Kotlin test library
+// }
+// 
+// tasks.test { // See 
+//     useJUnitPlatform() // JUnitPlatform for tests. See 
+// }
+// 
+// application {
+//     mainClass.set("MainKt")
+// }
+
+
+kotlin {
+    val hostOs = System.getProperty("os.name")
+    val isArm64 = System.getProperty("os.arch") == "aarch64"
+    val isMingwX64 = hostOs.startsWith("Windows")
+    val nativeTarget = when {
+        hostOs == "Mac OS X" && isArm64 -> macosArm64("native")
+        hostOs == "Mac OS X" && !isArm64 -> macosX64("native")
+        hostOs == "Linux" && isArm64 -> linuxArm64("native")
+        hostOs == "Linux" && !isArm64 -> linuxX64("native")
+        isMingwX64 -> mingwX64("native")
+        else -> throw GradleException("Host OS is not supported in Kotlin/Native.")
+    }
+
+    nativeTarget.apply {
+        binaries {
+            executable {
+                entryPoint = "main"
+            }
+        }
+    }
+
+    sourceSets {
+        nativeMain.dependencies {
+            implementation(libs.kotlinxSerializationJson)
+        }
+    }
 }
 
-tasks.test { // See 
-    useJUnitPlatform() // JUnitPlatform for tests. See 
-}
-
-application {
-    mainClass.set("MainKt")
-}

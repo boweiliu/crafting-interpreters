@@ -6,4 +6,11 @@
  * This project uses @Incubating APIs which are subject to change.
  */
 
-rootProject.name = "klox"
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = "KotlinNativeTemplate"
