@@ -8,6 +8,7 @@
 
 plugins {
   kotlin("jvm") version "2.3.0"
+  application
 }
 
 group = "org.example" // A company name, for example, `org.jetbrains`
@@ -24,4 +25,8 @@ dependencies { // All the libraries you want to use. See
 
 tasks.test { // See 
     useJUnitPlatform() // JUnitPlatform for tests. See 
+}
+
+application {
+    mainClass.set("MainKt")
 }

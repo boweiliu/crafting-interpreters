@@ -38,4 +38,7 @@ tasks.test { // See
 3. `./gradlew`
 3. `./gradlew build`
 
+4. Create the file src/main/kotlin/Main.kt
+4. Put your hello world into it
+4. run
 
