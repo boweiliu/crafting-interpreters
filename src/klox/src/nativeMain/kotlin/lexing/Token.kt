@@ -1,3 +1,4 @@
+package lexing
 
 enum class TokenType {
   // literals
@@ -67,10 +68,9 @@ data class Token(
   val lexeme: String,
 
   // the semantic value, if literal
-  val literal: LiteralVal,
+  val literal: LiteralVal?,
 
   val lineNo: Int,
-  val file: String,
-  
+  val fileName: String,
 )
 

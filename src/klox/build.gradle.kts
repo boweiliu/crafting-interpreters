@@ -67,6 +67,11 @@ kotlin {
             implementation(libs.kotlinxSerializationJson)
             implementation(libs.okio)
         }
+        nativeTest.dependencies {
+            implementation(libs.kotlinxSerializationJson)
+            implementation(libs.okio)
+            implementation(libs.kotest)
+        }
     }
 }
 
