@@ -13,7 +13,7 @@ plugins {
   // application
 }
 
-// group = "org.example" // A company name, for example, `org.jetbrains`
+group = "org.example" // A company name, for example, `org.jetbrains`
 // version = "1.0-SNAPSHOT" // Version to assign to the built artifact
 
 repositories { // Sources of dependencies. See 
