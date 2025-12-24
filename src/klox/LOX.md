@@ -49,6 +49,12 @@ Control
 * floor()
 * variable name reuse aka shadowing aka redeclaration
 * inline named function definitions
+* chr(65) == "A", ord("A") == 65
+
+note that lox has:
+* no arrays (linked lists via classes or closures)
+* dicts (via named object properties)
+
 
 # Examples
 
