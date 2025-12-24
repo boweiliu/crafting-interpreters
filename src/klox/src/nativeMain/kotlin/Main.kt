@@ -31,7 +31,7 @@ fun runFile(fname: String): Int {
   }.toList<String>()
 
   val fileContents: String = lines.joinToString("\n")
-  val errors = run(fileContents)
+  val errors = run(fileContents, fname)
 
   if (errors.size > 0) {
     // Report all the errors
@@ -50,23 +50,26 @@ fun runPrompt(): Int {
       print("\n")
       return 0
     }
-    val errors = run(ln)
+    val errors = run(ln, "<stdout>")
     errors.forEach { it.reportToStdout() }
   }
 }
 
 data class InterpreterError(
   val locationLineNo: Int,
-  val locationInfo: String,
+  val locationFile: String,
   val message: String,
 )
 
 fun InterpreterError.reportToStdout(): Unit {
+  println("Error: ${this.message} at ${this.locationFile}:${this.locationLineNo}")
 }
 
-fun run(ln: String): List<InterpreterError> {
-  // TODO: start scanning
+fun run(ln: String, sourceFname: String): List<InterpreterError> {
+  return sequence<InterpreterError> {
+    // TODO: start scanning
 
-  println(ln)
-  return listOf()
+    println(ln)
+    yield(InterpreterError(-1, sourceFname, ln))
+  }.toList<InterpreterError>()
 }
