@@ -3,6 +3,8 @@ import okio.*
 import okio.ByteString.Companion.encodeUtf8
 import okio.Path.Companion.toPath
 
+import lexing.*
+
 fun main(args: Array<String>): Unit {
   var retCode: Int;
   if (args.size > 1) {
