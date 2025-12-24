@@ -31,9 +31,15 @@ fun runFile(fname: String): Int {
   }.toList<String>()
 
   val fileContents: String = lines.joinToString("\n")
-  run(fileContents)
+  val errors = run(fileContents)
 
-  return 0
+  if (errors.size > 0) {
+    // Report all the errors
+    errors.forEach { it.reportToStdout() }
+    return 65
+  } else {
+    return 0
+  }
 }
 
 fun runPrompt(): Int {
@@ -44,12 +50,23 @@ fun runPrompt(): Int {
       print("\n")
       return 0
     }
-    run(ln)
+    val errors = run(ln)
+    errors.forEach { it.reportToStdout() }
   }
 }
 
-fun run(ln: String): Unit {
+data class InterpreterError(
+  val locationLineNo: Int,
+  val locationInfo: String,
+  val message: String,
+)
+
+fun InterpreterError.reportToStdout(): Unit {
+}
+
+fun run(ln: String): List<InterpreterError> {
   // TODO: start scanning
 
   println(ln)
+  return listOf()
 }
