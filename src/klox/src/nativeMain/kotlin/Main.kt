@@ -31,16 +31,25 @@ fun runFile(fname: String): Int {
   }.toList<String>()
 
   val fileContents: String = lines.joinToString("\n")
-  println(fileContents)
+  run(fileContents)
 
   return 0
 }
 
 fun runPrompt(): Int {
   while (true) {
+    print("> ")
     val ln: String? = readlnOrNull()
     if (ln == null) {
+      print("\n")
       return 0
     }
+    run(ln)
   }
+}
+
+fun run(ln: String): Unit {
+  // TODO: start scanning
+
+  println(ln)
 }
