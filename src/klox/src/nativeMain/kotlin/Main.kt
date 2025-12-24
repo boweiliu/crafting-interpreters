@@ -1,9 +1,7 @@
 import kotlin.system.exitProcess
+import okio.Path
 
 fun main(args: Array<String>): Unit {
-  println("hello from native kotlin rebuild here")
-  println(args.joinToString(","))
-
   var retCode: Int;
   if (args.size > 1) {
     println("Usage: klox [script]")
@@ -18,14 +16,14 @@ fun main(args: Array<String>): Unit {
 }
 
 fun runFile(fname: String): Int {
+  // val contents = File(fname).readText(Charsets.UTF_8)
   return 0
 }
 
 fun runPrompt(): Int {
   while (true) {
-    val ln = readln()
-    println(ln)
-    if (ln.length == 0) {
+    val ln: String? = readlnOrNull()
+    if (ln == null) {
       return 0
     }
   }

@@ -45,3 +45,10 @@ application {
 4. Put your hello world into it
 4. run
 
+
+## to add a dep manually
+
+1. add it to gradle/libs.versions.toml under versions
+1. add it to gradle/libs.versions.toml under libraries, referencing the version
+1. add it to sourceSets in build.gradle.kts
+1. if it fails because its not in maven, cri
