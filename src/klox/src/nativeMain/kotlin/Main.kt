@@ -65,13 +65,12 @@ fun InterpreterError.reportToStdout(): Unit {
   println("Error: ${this.message} at ${this.locationFile}:${this.locationLineNo}")
 }
 
-fun run(ln: String, sourceFname: String): List<InterpreterError> {
+fun run(ss: String, sourceFname: String): List<InterpreterError> {
   return sequence<InterpreterError> {
     // TODO: start scanning
 
-    println(ln)
-
-    this.test_here({ yield(InterpreterError(-1, sourceFname, ln)) })
+    // test yielding data/errors
+    this.test_here({ yield(InterpreterError(-1, sourceFname, ss)) })
   }.toList<InterpreterError>()
 }
 
