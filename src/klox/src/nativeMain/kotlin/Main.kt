@@ -1,5 +1,7 @@
 import kotlin.system.exitProcess
-import okio.Path
+import okio.*
+import okio.ByteString.Companion.encodeUtf8
+import okio.Path.Companion.toPath
 
 fun main(args: Array<String>): Unit {
   var retCode: Int;
@@ -16,7 +18,21 @@ fun main(args: Array<String>): Unit {
 }
 
 fun runFile(fname: String): Int {
-  // val contents = File(fname).readText(Charsets.UTF_8)
+  val lines: List<String> = sequence<String> {
+    FileSystem.SYSTEM.source(fname.toPath()).use { fileSource ->
+      fileSource.buffer().use { bufferedFileSource ->
+        while (true) {
+          val line: String = bufferedFileSource.readUtf8Line() ?: break
+          // println(line)
+          yield(line)
+        }
+      }
+    }
+  }.toList<String>()
+
+  val fileContents: String = lines.joinToString("\n")
+  println(fileContents)
+
   return 0
 }
 
