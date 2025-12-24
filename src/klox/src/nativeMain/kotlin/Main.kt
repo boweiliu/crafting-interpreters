@@ -70,6 +70,11 @@ fun run(ln: String, sourceFname: String): List<InterpreterError> {
     // TODO: start scanning
 
     println(ln)
-    yield(InterpreterError(-1, sourceFname, ln))
+
+    this.test_here({ yield(InterpreterError(-1, sourceFname, ln)) })
   }.toList<InterpreterError>()
+}
+
+suspend fun SequenceScope<InterpreterError>.test_here(cb: suspend SequenceScope<InterpreterError>.() -> Unit): Unit {
+  this.cb()
 }
