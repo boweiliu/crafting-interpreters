@@ -6,7 +6,7 @@ data class InterpreterError(
   val message: String,
 )
 
-suspend fun SequenceScope<InterpreterError>.test_here(cb: suspend SequenceScope<InterpreterError>.() -> Unit): Unit {
+suspend fun <T> SequenceScope<T>.test_here(cb: suspend SequenceScope<T>.() -> Unit): Unit {
   this.cb()
 }
 
