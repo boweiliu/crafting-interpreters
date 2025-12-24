@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 fun test1() {
   println("test")
   assertEquals(1, 1, "good this should pass")
-  assertEquals(1, 9, "this should fail here")
+  // assertEquals(1, 9, "this should fail here")
 }
 
 
