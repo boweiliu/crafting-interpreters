@@ -118,7 +118,7 @@ class LexerTest {
 
   @Test
   fun itLexesNumbers() {
-    val (tokens, errs) = run("123 4.5 -0", "<stdin>")
+    val (tokens, errs) = run("123 4.5 -6*7// hello", "<stdin>")
     errs.shouldHaveSize(0)
     tokens.shouldHaveSize(5)
     tokens.map { it.type }.shouldBe(listOf(
@@ -126,6 +126,9 @@ class LexerTest {
       TokenType.NUMBER,
       TokenType.MINUS,
       TokenType.NUMBER,
+      TokenType.STAR,
+      TokenType.NUMBER,
+      TokenType.COMMENT,
       TokenType.EOF
     ))
     tokens.take(2).map { it.literal!!.vl }.shouldBe(listOf<Any>(123, 4.5))
