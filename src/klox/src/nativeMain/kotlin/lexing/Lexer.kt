@@ -32,7 +32,10 @@ suspend fun LexScope.coRun(
     val (nxt1, nxt2) = Pair(nxt1Pair?.second, nxt2Pair?.second)
 
     // BODY goes here
-    if (lexerState == "DEFAULT") {
+    if (lexerState == "SKIP_ONE") {
+      lexerState = "DEFAULT"
+      return@forEach
+    } else if (lexerState == "DEFAULT") {
       when {
         curr == '"' -> {
           lexerState = "STRING"
@@ -45,6 +48,14 @@ suspend fun LexScope.coRun(
           lexerStateBuilder.clear()
           lexerStateBuilder.append(curr)
           return@forEach
+        }
+        curr == ' ' || curr == '\t' || curr == '\n' || curr == '\r' -> {
+          // ignore whitespace
+          return@forEach
+        }
+        (tryDoMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN, yieldT, lineNo, sourceFname)) -> {
+          lexerState = "SKIP_ONE"
+          return@forEach 
         }
         (tryDoMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN, yieldT, lineNo, sourceFname)) ->
           return@forEach 
@@ -84,7 +95,7 @@ suspend fun LexScope.coRun(
   }
 }
 
-// Helper function to munch the simple singleton characters
+// Helper function to munch the simple singleton characters. Remember to greedy much 2ch first!!
 suspend fun LexScope.tryDoMunch1(
   curr: Char,
   CHAR_LOOKUP: Map<Char, TokenType>,
@@ -100,8 +111,24 @@ suspend fun LexScope.tryDoMunch1(
   return false
 }
 
+// Helper function to munch the 2character lexemes
+// (tryDoMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN, yieldT, lineNo, sourceFname)) ->
+suspend fun LexScope.tryDoMunch2(
+  curr: Char,
+  nxt1: Char?,
+  CHAR_LOOKUP: Map<Pair<Char, Char>, TokenType>,
+  yieldT: suspend LexScope.(t: Token) -> Unit,
+  lineNo: Int,
+  sourceFname: String,
+): Boolean {
+  if (nxt1 == null) return false
 
-
+  CHAR_LOOKUP.get(Pair(curr, nxt1))?.let { tokenType ->
+    yieldT(Token(tokenType, curr.toString() + nxt1.toString(), null, lineNo, sourceFname))
+    return true
+  }
+  return false
+}
 
 
 // Helper function to iterate through a array and peek ahead at it

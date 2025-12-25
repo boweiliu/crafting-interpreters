@@ -99,6 +99,24 @@ class LexerTest {
   }
 
   @Test
+  fun itLexesVariousSymbols() {
+    val sourceString = """
+    ( ) { } , ; + - *
+//  1 2 3 4 5 6 7 8 9
+    / % ! = < >
+//  1 2 3 4 5 6
+    != == <= >=    // trailing whitespace
+//  18 19 20 21    22    23=thisline 24=eof
+"""
+    val (tokens, errs) = run(sourceString, "<stdin>")
+    errs.shouldHaveSize(0)
+    // 10 per assertion so we can easily spot which is missing
+    tokens.map { it.type }.take(10).shouldHaveSize(10)
+    tokens.map { it.type }.drop(10).take(10).shouldHaveSize(10)
+    tokens.map { it.type }.drop(20).take(10).shouldHaveSize(4)
+  }
+
+  @Test
   fun itLexesErrors() {
     val (tokens, errs) = run("^", "<stdin>")
     errs.shouldHaveSize(1)
