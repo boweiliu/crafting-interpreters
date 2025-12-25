@@ -26,10 +26,36 @@ suspend fun LexScope.coRun(
   // theres an implicit state diagram
   var lexerState: String = "DEFAULT"
   var lexerStateBuilder: StringBuilder = StringBuilder()
+  var chompExtraState: Boolean = false
 
   indexedCharacters.peekAhead3().forEach { (currPair, nxt1Pair, nxt2Pair) ->
     val lineNo: Int = currPair?.first ?: numLines
     val (curr, nxt1, nxt2) = Triple(currPair?.second, nxt1Pair?.second, nxt2Pair?.second)
+
+    // REFACTORED body goes here:
+    // 0. If we consumed a bigram last, just skip
+    if (chompExtraState) {
+      chompExtraState = false
+      return@forEach
+    }
+
+    /// // 1. compute intermediate/preparatory state
+    /// val intermediateState = getIntermediateState(lexerState, curr, nxt1, nxt2)
+
+    /// // 2. handle state transition
+    /// val (maybeT, maybeE) = getDataFromLeavingState(lexerState, intermediateState)
+    /// lexerState = intermediateState
+    /// maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
+    /// maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
+
+    /// // 3. handle fresh state
+    /// val (maybeT, maybeE, shouldChompExtra, newState) = getTransitionForUpdatedState(lexerState, curr, nxt1, nxt2)
+    /// maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
+    /// maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
+    /// if (shouldChompExtra) chompExtraState = true
+    /// lexerState = newState
+    /// return@forEach
+    
 
     // BODY goes here
     when (lexerState) {
@@ -162,6 +188,7 @@ suspend fun LexScope.coRun(
     }
   }
 }
+
 
 // Helper function to munch the simple singleton characters. Remember to greedy much 2ch first!!
 suspend fun LexScope.tryDoMunch1(
