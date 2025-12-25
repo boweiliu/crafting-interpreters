@@ -57,7 +57,7 @@ kotlin {
 
     targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
         binaries.all {
-            freeCompilerArgs += "-g"
+            freeCompilerArgs += listOf("-g", "-Xg0")
             linkerOpts("-g")
         }
     }

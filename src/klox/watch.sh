@@ -7,5 +7,5 @@
 # echo ./build/bin/native/debugTest/test.kexe ; echo $?
 # exit 0
 
-find src -name '*.kt' -type f | entr -d -s './gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe --ktest_regex_filter='\''.*DoubleEqual.*'\'' ; echo $?'
-# find src -name '*.kt' -type f | entr -d -s './gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe  ; echo $?'
+#find src -name '*.kt' -type f | entr -d -s './gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe --ktest_regex_filter='\''.*DoubleEqual.*'\'' ; echo $?'
+find src -name '*.kt' -type f | entr -d -s './gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe  ; echo $?'

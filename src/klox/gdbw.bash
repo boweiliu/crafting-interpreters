@@ -23,6 +23,6 @@ break *$ADDR
 run
 EOF
 
-gdb -x ./.gdb_setup.txt "$1"
+echo gdb -x ./.gdb_setup.txt --args "$@"
 
 

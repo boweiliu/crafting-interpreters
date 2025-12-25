@@ -2,9 +2,10 @@ package lexing
 
 enum class LexerState {
   DEFAULT,
+  EOF,
+  STRING_START,
   STRING,
   COMMENT,
-  EOF,
   NUMBER,
   ALPHA,
 }
@@ -19,20 +20,20 @@ data class LexerStateData(
 // aka the intermediate state or the pre-char state.
 // Return null == no change.
 fun getIntermediateState(
-  prev: LexerState,
+  old: LexerState,
   curr: Char?, nxt1: Char?, nxt2: Char?
 ): LexerState? {
 
-  if (prev == LexerState.EOF)
+  if (old == LexerState.EOF)
     return null
   if (curr == null)
     return LexerState.EOF
 
-  return when(prev) {
+  return when(old) {
     LexerState.DEFAULT -> {
       when {
         curr == '"' ->
-          LexerState.STRING
+          LexerState.STRING_START
         curr == '/' && nxt1 == '/' ->
           LexerState.COMMENT
         curr.isDigit() ->
@@ -72,7 +73,7 @@ fun computeForChar(
     }
     LexerState.DEFAULT -> {
       if (curr == null)
-        return LQuad(null, InterpreterErrorType.UNHANDLED_LEXER_STATE.formatToLError())
+        return LQuad(null, InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(stateData.state))
       if (curr == ' ' || curr == '\t' || curr == '\n' || curr == '\r')
         return LQuad()
       tryMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN) ?.let {
@@ -81,11 +82,25 @@ fun computeForChar(
       tryMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN) ?.let {
         return LQuad(it)
       }
-      return LQuad(null, InterpreterErrorType.UNRECOGNIZED_CHARACTER.formatToLError(curr.toString()))
+      return LQuad(null, InterpreterErrorType.UNRECOGNIZED_CHARACTER.toLError(curr))
+    }
+    LexerState.STRING_START -> {
+        return LQuad(null, null, false, LexerState.STRING)
     }
     LexerState.STRING -> {
+      stateData.builder.append(curr)
+      if (curr == '"') {
+        return LQuad(null, null, false, LexerState.DEFAULT)
+      }
+      return LQuad()
     }
     LexerState.COMMENT -> {
+      if (curr == '\n') {
+        return LQuad(null, null, false, LexerState.DEFAULT)
+      } else {
+        stateData.builder.append(curr)
+        return LQuad()
+      }
     }
     LexerState.NUMBER -> {
     }
@@ -94,6 +109,36 @@ fun computeForChar(
   }
   return LQuad(null, null, false, null)
 }
+
+data class LTriple<T1 : LToken?, T2 : LError?, T3: LexerState?>(
+  val first: T1? = null,
+  val second: T2? = null,
+  val third: T3? = null,
+)
+
+// Compute how to handle a state transition (usually by dumping the stringbuilder data out).
+fun computeForTransition(
+  oldStateData: LexerStateData, toState: LexerState, cause: Char?
+): LTriple<LToken?, LError?, LexerState?> {
+  return when (oldStateData.state) {
+    LexerState.EOF,
+    LexerState.DEFAULT -> 
+      LTriple()
+    LexerState.COMMENT ->
+      LTriple(LToken(TokenType.COMMENT, oldStateData.builder.toString()))
+    LexerState.STRING_START -> {
+      LTriple()
+    }
+    LexerState.STRING -> {
+      val lexeme = oldStateData.builder.toString()
+      val stringVal = LiteralVal.StringVal(lexeme.substring(1, lexeme.length - 1))
+      LTriple(LToken(TokenType.STRING, lexeme, stringVal))
+    }
+    else ->
+      LTriple(null, InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(oldStateData.state))
+  }
+}
+
 
 fun tryMunch1(curr: Char, LOOKUP_MAP: Map<Char, TokenType>): LToken? {
   LOOKUP_MAP.get(curr)?.let { type ->
@@ -111,17 +156,6 @@ fun tryMunch2(curr: Char, nxt: Char?, LOOKUP_MAP: Map<Pair<Char, Char>, TokenTyp
     return null
 }
 
-fun InterpreterErrorType.formatToLError(vararg args: Any?): LError {
-  return LError(this, this.fformat(*args))
-}
-
-
-// Compute how to handle a state transition (usually by dumping the stringbuilder data out).
-fun computeForTransition(
-  prev: LexerStateData, med: LexerState, cause: Char?
-): Pair<LToken?, LError?> {
-  return Pair(null, null)
-}
 
 data class LQuad<T1 : LToken?, T2 : LError?, T3 : Boolean, T4 : LexerState?>(
   val first: T1? = null,
@@ -141,3 +175,7 @@ data class LError(
   val msg: String,
 )
 
+
+fun InterpreterErrorType.toLError(vararg args: Any?): LError {
+  return LError(this, this.fformat(*args))
+}
