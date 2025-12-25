@@ -21,6 +21,7 @@ enum class InterpreterErrorType(val sev: String, val code: String) {
   UNPARSEABLE_DOUBLE_NUMBER     ("E", "032"),
   UNPARSEABLE_INT_NUMBER        ("E", "033"),
   PARSED_INT_AS_DOUBLE          ("W", "034"),
+  NEVER                         ("E", "990"),
   ;
 
   companion object {}
@@ -47,6 +48,23 @@ val InterpreterErrorType.Companion.MESSAGE_TEMPLATE_MAP: Map<InterpreterErrorTyp
     InterpreterErrorType.PARSED_INT_AS_DOUBLE to
       "Warning: parsed int '%s' as double, possible precision loss",
   )
+
+fun InterpreterErrorType.fformat(vararg args: Any?): String {
+  InterpreterErrorType.MESSAGE_TEMPLATE_MAP.get(this)?.let { template: String ->
+    return template.fformat(*args)
+  } ?:
+    return "Missing error string template for ${this.name}"
+}
+
+fun String.fformat(vararg args: Any?): String {
+  var out: String = this
+  val insertions: MutableList<Any?> = args.toMutableList()
+  while (out.contains("%s")) {
+    if (insertions.isNotEmpty())
+      out = out.replace("%s", insertions.removeFirst().toString())
+  }
+  return out
+}
 
 suspend fun <T> SequenceScope<T>.test_here(cb: suspend SequenceScope<T>.() -> Unit): Unit {
   this.cb()

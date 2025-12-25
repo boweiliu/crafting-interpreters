@@ -4,6 +4,7 @@ enum class LexerState {
   DEFAULT,
   STRING,
   COMMENT,
+  EOF,
   NUMBER,
   ALPHA,
 }
@@ -11,43 +12,124 @@ enum class LexerState {
 data class LexerStateData(
   val state: LexerState = LexerState.DEFAULT,
   val builder: StringBuilder = StringBuilder(),
+  val didError: Boolean = false,
 )
 
-data class LToken(
-  val type: TokenType,
-  val lexeme: String,
-  val literal: LiteralVal,
-)
-
-data class LError(
-  val type: InterpreterErrorType,
-  val msg: String,
-)
-
+// Compute the state transition when first encountering a character (but before processing it).
+// aka the intermediate state or the pre-char state.
+// Return null == no change.
 fun getIntermediateState(
   prev: LexerState,
   curr: Char?, nxt1: Char?, nxt2: Char?
 ): LexerState? {
+
+  if (prev == LexerState.EOF)
+    return null
+  if (curr == null)
+    return LexerState.EOF
+
+  return when(prev) {
+    LexerState.DEFAULT -> {
+      when {
+        curr == '"' ->
+          LexerState.STRING
+        curr == '/' && nxt1 == '/' ->
+          LexerState.COMMENT
+        curr.isDigit() ->
+          LexerState.NUMBER
+        curr.isLetter() ->
+          LexerState.ALPHA
+        else ->
+          null
+      }
+    }
+    LexerState.STRING ->
+      null
+    LexerState.COMMENT -> {
+      if (curr == '\n') LexerState.DEFAULT
+      else null
+    }
+    LexerState.NUMBER -> {
+      if (curr.isLetter() || curr == '_') null
+      else if (curr.isDigit()) null
+      else LexerState.DEFAULT
+    }
+    else -> {
+      null
+    }
+  }
+}
+
+// Compute how to handle a character given we've already performed the pre-char state transition.
+// This may result in another transition.
+fun computeForChar(
+  stateData: LexerStateData,
+  curr: Char?, nxt1: Char?, nxt2: Char?
+): LQuad<LToken?, LError?, Boolean, LexerState?> {
+  when(stateData.state) {
+    LexerState.EOF -> {
+      return LQuad(LToken(TokenType.EOF, ""))
+    }
+    LexerState.DEFAULT -> {
+      if (curr == null)
+        return LQuad(null, InterpreterErrorType.UNHANDLED_LEXER_STATE.formatToLError())
+      if (curr == ' ' || curr == '\t' || curr == '\n' || curr == '\r')
+        return LQuad()
+      tryMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN) ?.let {
+        return LQuad(it)
+      }
+      tryMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN) ?.let {
+        return LQuad(it)
+      }
+      return LQuad(null, InterpreterErrorType.UNRECOGNIZED_CHARACTER.formatToLError(curr.toString()))
+    }
+    LexerState.STRING -> {
+    }
+    LexerState.COMMENT -> {
+    }
+    LexerState.NUMBER -> {
+    }
+    else -> {
+    }
+  }
+  return LQuad(null, null, false, null)
+}
+
+fun tryMunch1(curr: Char, LOOKUP_MAP: Map<Char, TokenType>): LToken? {
   return null
 }
 
+fun tryMunch2(curr: Char, nxt: Char?, LOOKUP_MAP: Map<Pair<Char, Char>, TokenType>): LToken? {
+  return null
+}
+
+fun InterpreterErrorType.formatToLError(vararg args: Any?): LError {
+  return LError(this, this.fformat(*args))
+}
+
+
+// Compute how to handle a state transition (usually by dumping the stringbuilder data out).
 fun computeForTransition(
   prev: LexerStateData, med: LexerState, cause: Char?
 ): Pair<LToken?, LError?> {
   return Pair(null, null)
 }
 
-data class Quadruple<T1, T2, T3, T4>(
-  val first: T1,
-  val second: T2,
-  val third: T3,
-  val fourth: T4,
+data class LQuad<T1 : LToken?, T2 : LError?, T3 : Boolean, T4 : LexerState?>(
+  val first: T1? = null,
+  val second: T2? = null,
+  val third: Boolean = false,
+  val fourth: T4? = null,
 )
 
-fun computeForChar(
-  stateData: LexerStateData,
-  curr: Char?, nxt1: Char?, nxt2: Char?
-): Quadruple<LToken?, LError?, Boolean, LexerState?> {
-  return Quadruple(null, null, false, null)
-}
+data class LToken(
+  val type: TokenType,
+  val lexeme: String,
+  val literal: LiteralVal? = null,
+)
+
+data class LError(
+  val type: InterpreterErrorType,
+  val msg: String,
+)
 

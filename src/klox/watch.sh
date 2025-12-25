@@ -4,4 +4,7 @@
 # ./gradlew linkDebugExecutableNative  && ./build/bin/native/debugExecutable/KotlinNativeTemplate.kexe hello.lox ; echo $?
 # ./gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe
 
-find src -name '*.kt' -type f | entr -d -s './gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe ; echo $?'
+# echo ./build/bin/native/debugTest/test.kexe ; echo $?
+# exit 0
+
+find src -name '*.kt' -type f | entr -d -s './gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe --ktest_regex_filter='\''.*ErrorTest.*'\'' ; echo $?'
