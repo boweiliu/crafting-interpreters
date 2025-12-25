@@ -1,7 +1,8 @@
 import kotlin.test.*
 import lexing.*
 
-import io.kotest.matchers.shouldBe
+import io.kotest.matchers.*
+import io.kotest.matchers.collections.*
 
 
 class LexerTest {
@@ -35,9 +36,9 @@ class LexerTest {
   }
 
   @Test
-  fun wrongItLexesErrors() {
-    val (_, errs) = run("", "<stdin>")
-    errs.size.shouldBe(1)
+  fun itLexesErrors() {
+    val (tokens, errs) = run("^", "<stdin>")
+    errs.shouldHaveSize(1)
   }
 }
 

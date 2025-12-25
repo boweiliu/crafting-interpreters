@@ -8,16 +8,18 @@ suspend fun LexScope.coRun(
   yieldT: suspend LexScope.(t: Token) -> Unit,
   yieldE: suspend LexScope.(e: InterpreterError) -> Unit,
 ): Unit {
-  // test yielding data/errors
-  this.test_here({
-    yieldE(InterpreterError(-1, sourceFname, ss))
-  })
-
   // TODO: start scanning
 
+  val splitted = ss.split("\n")
+  val numLines = splitted.size
+  val isNewlineTerminated = (ss.lastOrNull() == '\n')
   val numberedLines: List<Pair<Int, String>> = ss.split("\n")
-    .mapIndexed { idx, ln -> Pair(idx + 1, ln + "\n") }
-  val numLines = numberedLines.size
+    .mapIndexed { idx, ln ->
+      if (isNewlineTerminated)
+        Pair(idx + 1, ln + "\n")
+      else
+        Pair(idx + 1, ln + if (idx < numLines - 1) "\n" else "")
+    }
 
   val indexedCharacters: List<Pair<Int, Char>> = numberedLines
     .flatMap { (idx, ln) -> ln.toCharArray().toList().map { ch -> Pair(idx, ch) } }
@@ -29,8 +31,10 @@ suspend fun LexScope.coRun(
     // BODY goes here
     if (tryDoMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN, yieldT, lineNo, sourceFname)) {
       return@forEach
+    } else {
+      // dont forget to error if we are confused
+      yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character '${curr}'"))
     }
-
   }
 
   yieldT(Token(TokenType.EOF, "", null, numLines + 1, sourceFname))
