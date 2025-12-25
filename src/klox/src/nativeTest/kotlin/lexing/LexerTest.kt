@@ -86,6 +86,19 @@ class LexerTest {
   }
 
   @Test
+  fun itLexesCommentFollowedByStuff() {
+    val (tokens, errs) = run("//x\n\"f\"", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(3)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.COMMENT,
+      TokenType.STRING,
+      TokenType.EOF
+    ))
+    tokens[0].shouldBe(Token(TokenType.COMMENT, "//x", null, 1, "<stdin>"))
+  }
+
+  @Test
   fun itLexesErrors() {
     val (tokens, errs) = run("^", "<stdin>")
     errs.shouldHaveSize(1)
