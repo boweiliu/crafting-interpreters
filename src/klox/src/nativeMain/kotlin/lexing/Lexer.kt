@@ -29,11 +29,12 @@ suspend fun LexScope.coRun(
     val (nxt1, nxt2) = Pair(nxt1Pair?.second, nxt2Pair?.second)
 
     // BODY goes here
-    if (tryDoMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN, yieldT, lineNo, sourceFname)) {
-      return@forEach
-    } else {
-      // dont forget to error if we are confused
-      yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character '${curr}'"))
+    when {
+      (tryDoMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN, yieldT, lineNo, sourceFname)) ->
+        return@forEach
+      else ->
+        // dont forget to error if we are confused
+        yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character '${curr}'"))
     }
   }
 
