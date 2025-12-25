@@ -76,7 +76,7 @@ fun computeForChar(
       if (curr == ' ' || curr == '\t' || curr == '\n' || curr == '\r')
         return LQuad()
       tryMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN) ?.let {
-        return LQuad(it)
+        return LQuad(it, null, true)
       }
       tryMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN) ?.let {
         return LQuad(it)
@@ -96,11 +96,19 @@ fun computeForChar(
 }
 
 fun tryMunch1(curr: Char, LOOKUP_MAP: Map<Char, TokenType>): LToken? {
-  return null
+  LOOKUP_MAP.get(curr)?.let { type ->
+    return LToken(type, curr.toString())
+  } ?:
+    return null
 }
 
 fun tryMunch2(curr: Char, nxt: Char?, LOOKUP_MAP: Map<Pair<Char, Char>, TokenType>): LToken? {
-  return null
+  if (nxt == null) return null
+
+  LOOKUP_MAP.get(Pair(curr, nxt))?.let { type ->
+    return LToken(type, curr.toString() + nxt.toString())
+  } ?:
+    return null
 }
 
 fun InterpreterErrorType.formatToLError(vararg args: Any?): LError {

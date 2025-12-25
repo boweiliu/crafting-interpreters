@@ -60,8 +60,9 @@ fun String.fformat(vararg args: Any?): String {
   var out: String = this
   val insertions: MutableList<Any?> = args.toMutableList()
   while (out.contains("%s")) {
-    if (insertions.isNotEmpty())
-      out = out.replace("%s", insertions.removeFirst().toString())
+    if (insertions.isEmpty())
+      break
+    out = out.replace("%s", insertions.removeFirst().toString())
   }
   return out
 }

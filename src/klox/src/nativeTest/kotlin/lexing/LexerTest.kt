@@ -28,11 +28,22 @@ class LexerTest {
   @Test
   fun itLexesParens() {
     val (tokens, errs) = run("()", "<stdin>")
-    tokens.size.shouldBe(3)
+    tokens.shouldHaveSize(3)
     errs.shouldHaveSize(0)
     tokens.map { it.type }.shouldBe(listOf(
       TokenType.LEFT_PAREN,
       TokenType.RIGHT_PAREN,
+      TokenType.EOF
+    ))
+  }
+
+  @Test
+  fun itLexesDoubleEqual() {
+    val (tokens, errs) = run("==", "<stdin>")
+    tokens.shouldHaveSize(2)
+    errs.shouldHaveSize(0)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.EQUAL_EQUAL,
       TokenType.EOF
     ))
   }
@@ -102,9 +113,9 @@ class LexerTest {
   fun itLexesVariousSymbols() {
     val sourceString = """
     ( ) { } , ; + - *
-//  1 2 3 4 5 6 7 8 9
+//  1 2 3 4 5 6 7 8 9 10=thisline
     / % ! = < >
-//  1 2 3 4 5 6
+//  1 2 3 4 5 6   17=thisline
     != == <= >=    // trailing whitespace
 //  18 19 20 21    22    23=thisline 24=eof
 """
@@ -114,6 +125,8 @@ class LexerTest {
     tokens.map { it.type }.take(10).shouldHaveSize(10)
     tokens.map { it.type }.drop(10).take(10).shouldHaveSize(10)
     tokens.map { it.type }.drop(20).take(10).shouldHaveSize(4)
+    tokens.map { it.type }[0].shouldBe(TokenType.LEFT_PAREN)
+    tokens.map { it.type }[17].shouldBe(TokenType.BANG_EQUAL)
   }
 
   @Test
