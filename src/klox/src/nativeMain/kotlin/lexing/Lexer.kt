@@ -28,8 +28,8 @@ suspend fun LexScope.coRun(
   var lexerStateBuilder: StringBuilder = StringBuilder()
 
   indexedCharacters.peekAhead3().forEach { (currPair, nxt1Pair, nxt2Pair) ->
-    val (lineNo, curr) = currPair
-    val (nxt1, nxt2) = Pair(nxt1Pair?.second, nxt2Pair?.second)
+    val lineNo: Int = currPair?.first ?: numLines
+    val (curr, nxt1, nxt2) = Triple(currPair?.second, nxt1Pair?.second, nxt2Pair?.second)
 
     // BODY goes here
     if (lexerState == "SKIP_ONE") {
@@ -37,6 +37,10 @@ suspend fun LexScope.coRun(
       return@forEach
     } else if (lexerState == "DEFAULT") {
       when {
+        curr == null -> {
+          yieldT(Token(TokenType.EOF, "", null, lineNo, sourceFname))
+          return@forEach
+        }
         curr == '"' -> {
           lexerState = "STRING"
           lexerStateBuilder.clear()
@@ -45,6 +49,12 @@ suspend fun LexScope.coRun(
         }
         curr == '/' && nxt1 == '/' -> {
           lexerState = "COMMENT"
+          lexerStateBuilder.clear()
+          lexerStateBuilder.append(curr)
+          return@forEach
+        }
+        curr.isDigit() -> {
+          lexerState = "NUMBER"
           lexerStateBuilder.clear()
           lexerStateBuilder.append(curr)
           return@forEach
@@ -66,6 +76,9 @@ suspend fun LexScope.coRun(
     } else if (lexerState == "STRING") {
       lexerStateBuilder.append(curr)
       when (curr) {
+        null -> {
+          yieldE(InterpreterError(numLines + 1, sourceFname, "Unexpected end of file while parsing string"))
+        }
         '"' -> {
           lexerState = "DEFAULT"
           val lexeme = lexerStateBuilder.toString()
@@ -74,25 +87,27 @@ suspend fun LexScope.coRun(
         }
       }
     } else if (lexerState == "COMMENT") {
-      if (curr != '\n') {
-        lexerStateBuilder.append(curr)
-      }
-      when {
-        (curr == '\n' || nxt1 == null)  -> {
+      when(curr) {
+        null -> {
+          val lexeme = lexerStateBuilder.toString()
+          yieldT(Token(TokenType.COMMENT, lexeme, null, lineNo, sourceFname))
+          yieldT(Token(TokenType.EOF, "", null, lineNo, sourceFname))
+        }
+        '\n' -> {
           lexerState = "DEFAULT"
           val lexeme = lexerStateBuilder.toString()
           yieldT(Token(TokenType.COMMENT, lexeme, null, lineNo, sourceFname))
         }
+        else -> 
+          lexerStateBuilder.append(curr)
       }
     }
   }
-
-  if (lexerState == "DEFAULT") {
-    yieldT(Token(TokenType.EOF, "", null, numLines + 1, sourceFname))
-  } else {
-    // BOWEI BREAKPOINT HERE
-    yieldE(InterpreterError(numLines + 1, sourceFname, "Unexpected end of file while parsing string"))
-  }
+//   if (lexerState == "DEFAULT") {
+//     yieldT(Token(TokenType.EOF, "", null, numLines + 1, sourceFname))
+//   } else {
+//     yieldE(InterpreterError(numLines + 1, sourceFname, "Unexpected end of file while parsing string"))
+//   }
 }
 
 // Helper function to munch the simple singleton characters. Remember to greedy much 2ch first!!
@@ -131,13 +146,14 @@ suspend fun LexScope.tryDoMunch2(
 }
 
 
-// Helper function to iterate through a array and peek ahead at it
-fun <T> Iterable<T>.peekAhead3(): List<Triple<T, T?, T?>> {
+// Helper function to iterate through a array and peek ahead at it.
+// Always returns a final 3xnull.
+fun <T> Iterable<T>.peekAhead3(): List<Triple<T?, T?, T?>> {
   var prev2: T? = null
   var prev: T? = null
   val ls: Iterable<T> = this
 
-  return sequence<Triple<T, T?, T?>> {
+  return sequence<Triple<T?, T?, T?>> {
     ls.forEach { it -> 
       if (prev2 != null && prev != null) {
         yield(Triple(prev2!!, prev!!, it))
@@ -151,7 +167,8 @@ fun <T> Iterable<T>.peekAhead3(): List<Triple<T, T?, T?>> {
     if (prev != null) {
       yield(Triple(prev!!,null,null))
     }
-  }.toList<Triple<T, T?, T?>>()
+     yield(Triple(null,null,null))
+  }.toList()
 }
 
 

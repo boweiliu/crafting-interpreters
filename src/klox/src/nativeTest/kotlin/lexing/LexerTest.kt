@@ -22,7 +22,7 @@ class LexerTest {
     val (tokens, errs) = run("", "<stdin>")
     tokens.shouldHaveSize(1)
     errs.shouldHaveSize(0)
-    tokens.shouldBe(listOf(Token(TokenType.EOF, "", null, 2, "<stdin>")))
+    tokens.shouldBe(listOf(Token(TokenType.EOF, "", null, 1, "<stdin>")))
   }
 
   @Test
@@ -133,13 +133,13 @@ class PeekAheadTest {
   @Test
   fun itJustRunsOnEmpty() {
     val result = listOf<String>().peekAhead3()
-    result.size.shouldBe(0)
+    result.shouldBe(listOf(Triple(null, null, null)))
   }
 
   @Test
   fun itJustRunsOnOne() {
     val result = listOf<String>("A").peekAhead3()
-    result.shouldBe(listOf(Triple("A", null, null)))
+    result.shouldBe(listOf(Triple("A", null, null), Triple(null, null, null)))
   }
 
   @Test
@@ -150,6 +150,7 @@ class PeekAheadTest {
       Triple('B', 'C', 'D'),
       Triple('C', 'D', null),
       Triple('D', null, null),
+      Triple(null, null, null),
     ))
   }
 
