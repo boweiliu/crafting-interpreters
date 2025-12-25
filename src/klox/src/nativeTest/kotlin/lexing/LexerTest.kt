@@ -20,7 +20,8 @@ class LexerTest {
   @Test
   fun itLexesEof() {
     val (tokens, errs) = run("", "<stdin>")
-    tokens.size.shouldBe(1)
+    tokens.shouldHaveSize(1)
+    errs.shouldHaveSize(0)
     tokens.shouldBe(listOf(Token(TokenType.EOF, "", null, 2, "<stdin>")))
   }
 
@@ -28,11 +29,47 @@ class LexerTest {
   fun itLexesParens() {
     val (tokens, errs) = run("()", "<stdin>")
     tokens.size.shouldBe(3)
+    errs.shouldHaveSize(0)
     tokens.map { it.type }.shouldBe(listOf(
       TokenType.LEFT_PAREN,
       TokenType.RIGHT_PAREN,
       TokenType.EOF
     ))
+  }
+
+  @Test
+  fun itErrorsUnmatchedString() {
+    val (tokens, errs) = run("\"", "<stdin>")
+    tokens.shouldHaveSize(0)
+    errs.shouldHaveSize(1)
+  }
+
+  @Test
+  fun itLexesEmptyString() {
+    val (tokens, errs) = run("\"\"", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(2)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.STRING,
+      TokenType.EOF
+    ))
+    tokens[0].type.shouldBe(TokenType.STRING)
+    tokens[0].lexeme.shouldBe("\"\"")
+    tokens[0].shouldBe(Token(TokenType.STRING, "\"\"", LiteralVal.StringVal(""), 1, "<stdin>"))
+  }
+
+  @Test
+  fun itLexesShortString() {
+    val (tokens, errs) = run("\"a\"", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(2)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.STRING,
+      TokenType.EOF
+    ))
+    tokens[0].type.shouldBe(TokenType.STRING)
+    tokens[0].literal!!.vl.shouldBe("a")
+    tokens[0].shouldBe(Token(TokenType.STRING, "\"a\"", LiteralVal.StringVal("a"), 1, "<stdin>"))
   }
 
   @Test

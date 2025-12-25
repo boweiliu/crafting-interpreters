@@ -7,7 +7,6 @@ enum class TokenType {
   NUMBER,
   COMMENT,
 
-
   COMMA,
   DOT,
   SEMICOLON,
@@ -59,6 +58,13 @@ sealed interface LiteralVal {
   data class StringVal(val v: String): LiteralVal
   data class IntVal(val v: Int): LiteralVal
   data class DoubleVal(val v: Double): LiteralVal
+  val vl get(): Any {
+    return when(this) {
+      is StringVal -> this.v
+      is IntVal -> this.v
+      is DoubleVal -> this.v
+    }
+  }
 }
 
 data class Token(

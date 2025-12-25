@@ -8,8 +8,6 @@ suspend fun LexScope.coRun(
   yieldT: suspend LexScope.(t: Token) -> Unit,
   yieldE: suspend LexScope.(e: InterpreterError) -> Unit,
 ): Unit {
-  // TODO: start scanning
-
   val splitted = ss.split("\n")
   val numLines = splitted.size
   val isNewlineTerminated = (ss.lastOrNull() == '\n')
@@ -24,21 +22,48 @@ suspend fun LexScope.coRun(
   val indexedCharacters: List<Pair<Int, Char>> = numberedLines
     .flatMap { (idx, ln) -> ln.toCharArray().toList().map { ch -> Pair(idx, ch) } }
 
+  
+  // theres an implicit state diagram
+  var lexerState: String = "DEFAULT"
+  var lexerStateStringVal: StringBuilder = StringBuilder()
+
   indexedCharacters.peekAhead3().forEach { (currPair, nxt1Pair, nxt2Pair) ->
     val (lineNo, curr) = currPair
     val (nxt1, nxt2) = Pair(nxt1Pair?.second, nxt2Pair?.second)
 
     // BODY goes here
-    when {
-      (tryDoMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN, yieldT, lineNo, sourceFname)) ->
-        return@forEach
-      else ->
-        // dont forget to error if we are confused
-        yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character '${curr}'"))
+    if (lexerState == "DEFAULT") {
+      when {
+        curr == '"' -> {
+          lexerState = "STRING"
+          lexerStateStringVal.clear()
+          return@forEach
+        }
+        (tryDoMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN, yieldT, lineNo, sourceFname)) ->
+          return@forEach 
+        else ->
+          // dont forget to error if we are confused
+          yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character '${curr}'"))
+      }
+    } else if (lexerState == "STRING") {
+      when (curr) {
+        '"' -> {
+          lexerState = "DEFAULT"
+          val ss = lexerStateStringVal.toString()
+          yieldT(Token(TokenType.STRING, "\"" + ss + "\"", LiteralVal.StringVal(ss), lineNo, sourceFname))
+        }
+        else ->
+          lexerStateStringVal.append(curr)
+      }
     }
   }
 
-  yieldT(Token(TokenType.EOF, "", null, numLines + 1, sourceFname))
+  if (lexerState == "DEFAULT") {
+    yieldT(Token(TokenType.EOF, "", null, numLines + 1, sourceFname))
+  } else {
+    // BOWEI BREAKPOINT HERE
+    yieldE(InterpreterError(numLines + 1, sourceFname, "Unexpected end of file while parsing string"))
+  }
 }
 
 // Helper function to munch the simple singleton characters
