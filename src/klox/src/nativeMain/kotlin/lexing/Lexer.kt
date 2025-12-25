@@ -25,7 +25,7 @@ suspend fun LexScope.coRun(
   
   // theres an implicit state diagram
   var lexerState: String = "DEFAULT"
-  var lexerStateStringVal: StringBuilder = StringBuilder()
+  var lexerStateBuilder: StringBuilder = StringBuilder()
 
   indexedCharacters.peekAhead3().forEach { (currPair, nxt1Pair, nxt2Pair) ->
     val (lineNo, curr) = currPair
@@ -36,7 +36,8 @@ suspend fun LexScope.coRun(
       when {
         curr == '"' -> {
           lexerState = "STRING"
-          lexerStateStringVal.clear()
+          lexerStateBuilder.clear()
+          lexerStateBuilder.append(curr)
           return@forEach
         }
         (tryDoMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN, yieldT, lineNo, sourceFname)) ->
@@ -46,14 +47,14 @@ suspend fun LexScope.coRun(
           yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character '${curr}'"))
       }
     } else if (lexerState == "STRING") {
+      lexerStateBuilder.append(curr)
       when (curr) {
         '"' -> {
           lexerState = "DEFAULT"
-          val ss = lexerStateStringVal.toString()
-          yieldT(Token(TokenType.STRING, "\"" + ss + "\"", LiteralVal.StringVal(ss), lineNo, sourceFname))
+          val lexeme = lexerStateBuilder.toString()
+          val stringVal = lexeme.substring(1, lexeme.length - 1)
+          yieldT(Token(TokenType.STRING, lexeme, LiteralVal.StringVal(stringVal), lineNo, sourceFname))
         }
-        else ->
-          lexerStateStringVal.append(curr)
       }
     }
   }
