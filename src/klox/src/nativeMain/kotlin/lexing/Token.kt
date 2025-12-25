@@ -72,5 +72,16 @@ data class Token(
 
   val lineNo: Int,
   val fileName: String,
-)
+) {
+  companion object {}
+}
+
+val Token.Companion.LOOKUP_1CH_TO_TOKEN: Map<Char, TokenType>
+  get() = mapOf(
+    '(' to TokenType.LEFT_PAREN,
+    ')' to TokenType.RIGHT_PAREN,
+  )
+
+val Token.Companion.LOOKUP_1TOKEN_TO_CH: Map<TokenType, Char>
+  get() = Token.LOOKUP_1CH_TO_TOKEN.map { (k,v) -> v to k }.toMap()
 

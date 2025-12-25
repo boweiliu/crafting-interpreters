@@ -18,9 +18,20 @@ class LexerTest {
 
   @Test
   fun itLexesEof() {
-    val (tokens, _) = run("", "<stdin>")
+    val (tokens, errs) = run("", "<stdin>")
     tokens.size.shouldBe(1)
     tokens.shouldBe(listOf(Token(TokenType.EOF, "", null, 2, "<stdin>")))
+  }
+
+  @Test
+  fun itLexesParens() {
+    val (tokens, errs) = run("()", "<stdin>")
+    tokens.size.shouldBe(3)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.LEFT_PAREN,
+      TokenType.RIGHT_PAREN,
+      TokenType.EOF
+    ))
   }
 
   @Test
