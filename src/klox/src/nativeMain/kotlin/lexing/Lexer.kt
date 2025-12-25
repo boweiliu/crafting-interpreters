@@ -40,6 +40,12 @@ suspend fun LexScope.coRun(
           lexerStateBuilder.append(curr)
           return@forEach
         }
+        curr == '/' && nxt1 == '/' -> {
+          lexerState = "COMMENT"
+          lexerStateBuilder.clear()
+          lexerStateBuilder.append(curr)
+          return@forEach
+        }
         (tryDoMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN, yieldT, lineNo, sourceFname)) ->
           return@forEach 
         else ->
@@ -54,6 +60,17 @@ suspend fun LexScope.coRun(
           val lexeme = lexerStateBuilder.toString()
           val stringVal = lexeme.substring(1, lexeme.length - 1)
           yieldT(Token(TokenType.STRING, lexeme, LiteralVal.StringVal(stringVal), lineNo, sourceFname))
+        }
+      }
+    } else if (lexerState == "COMMENT") {
+      if (curr != '\n') {
+        lexerStateBuilder.append(curr)
+      }
+      when {
+        (curr == '\n' || nxt1 == null)  -> {
+          lexerState = "DEFAULT"
+          val lexeme = lexerStateBuilder.toString()
+          yieldT(Token(TokenType.COMMENT, lexeme, null, lineNo, sourceFname))
         }
       }
     }
