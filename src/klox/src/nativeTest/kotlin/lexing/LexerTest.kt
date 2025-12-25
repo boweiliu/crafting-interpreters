@@ -126,7 +126,9 @@ class LexerTest {
       TokenType.NUMBER,
       TokenType.EOF
     ))
+    tokens.take(2).map { it.literal!!.vl }.shouldBe(listOf<Any>(123, 4.5))
   }
+
   @Test
   fun itLexesErrors() {
     val (tokens, errs) = run("^", "<stdin>")
