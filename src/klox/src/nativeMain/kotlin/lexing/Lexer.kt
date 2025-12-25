@@ -40,20 +40,30 @@ suspend fun LexScope.coRun(
     }
 
     /// // 1. compute intermediate/preparatory state
-    /// val intermediateState = getIntermediateState(lexerState, curr, nxt1, nxt2)
+    /// val maybeIntermediateState = getIntermediateState(stateData.state, curr, nxt1, nxt2)
 
     /// // 2. handle state transition
-    /// val (maybeT, maybeE) = getDataFromLeavingState(lexerState, intermediateState)
-    /// lexerState = intermediateState
-    /// maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
-    /// maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
+    /// maybeIntermediateState?.let { intermediateState -> 
+    ///   val (maybeT, maybeE) = computeForTransition(stateData, intermediateState, cause = curr)
+    ///   stateData = LexerStateData(state=intermediateState)
+    ///   maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
+    ///   maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
+    /// }
 
-    /// // 3. handle fresh state
-    /// val (maybeT, maybeE, shouldChompExtra, newState) = getTransitionForUpdatedState(lexerState, curr, nxt1, nxt2)
+    /// // 3. process the character in the intermediate state
+    /// val (maybeT, maybeE, shouldChompExtra, maybeNewState) =
+    ///   computeForChar(stateData, curr, nxt1, nxt2)
     /// maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
     /// maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
     /// if (shouldChompExtra) chompExtraState = true
-    /// lexerState = newState
+
+    /// // 4. do a post transition
+    /// maybeNewState ?. let { newState ->
+    ///   val (maybeT, maybeE) = computeForTransition(stateData, newState, cause = curr)
+    ///   stateData = LexerStateData(state=intermediateState)
+    ///   maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
+    ///   maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
+    /// }
     /// return@forEach
     
 
