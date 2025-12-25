@@ -1,20 +1,77 @@
 package lexing
 
+typealias LexScope = SequenceScope<EmittableLexingBlob>
+
+suspend fun LexScope.coRun(
+  ss: String,
+  sourceFname: String,
+  yieldT: suspend LexScope.(t: Token) -> Unit,
+  yieldE: suspend LexScope.(e: InterpreterError) -> Unit,
+): Unit {
+  // test yielding data/errors
+  this.test_here({
+    yieldE(InterpreterError(-1, sourceFname, ss))
+  })
+
+  // TODO: start scanning
+
+  val LOOK_WINDOW_SIZE = 3 // the current ch, the peek, and the one after that
+
+  // while (true) {
+    
+  // }
+}
+
+// Helper function to iterate through a array and peek ahead at it
+fun <T> peekAhead(ls: Iterable<T>): List<Triple<T, T?, T?>> {
+  var prev2: T? = null
+  var prev: T? = null
+
+  return sequence<Triple<T, T?, T?>> {
+    ls.forEach { it -> 
+      if (prev2 != null && prev != null) {
+        yield(Triple(prev2!!, prev!!, it))
+      }
+      prev2 = prev
+      prev = it
+    }
+    if (prev2 != null) {
+      yield(Triple(prev2!!,prev,null))
+    }
+    if (prev != null) {
+      yield(Triple(prev!!,null,null))
+    }
+  }.toList<Triple<T, T?, T?>>()
+}
+
+
+
+
+
 fun run(ss: String, sourceFname: String): List<InterpreterError> {
   val lexingBlobs = sequence<EmittableLexingBlob> {
-    // TODO: start scanning
-
-    // test yielding data/errors
-    this.test_here({
-      yield(EmittableLexingBlob.Err(InterpreterError(-1, sourceFname, ss)))
-    })
-
+    coRun(ss, sourceFname,
+      { t -> yield(EmittableLexingBlob.Tok(t)) },
+      { err -> yield(EmittableLexingBlob.Err(err)) },
+    )
   }.toList<EmittableLexingBlob>()
 
-  return listOf()
+  // split the sequence
+  val ts = mutableListOf<Token>()
+  val es = mutableListOf<InterpreterError>()
+
+  lexingBlobs.forEach { it ->
+    when(it) {
+      is EmittableLexingBlob.Err -> { es.add(it.e) }
+      is EmittableLexingBlob.Tok -> { ts.add(it.t) }
+    }
+  }
+
+  return es
 }
 
 sealed interface EmittableLexingBlob {
   data class Err(val e: InterpreterError): EmittableLexingBlob
-  data class Token(val t: Token): EmittableLexingBlob
+  data class Tok(val t: Token): EmittableLexingBlob
 }
+
