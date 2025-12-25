@@ -15,15 +15,13 @@ suspend fun LexScope.coRun(
 
   // TODO: start scanning
 
-  val LOOK_WINDOW_SIZE = 3 // the current ch, the peek, and the one after that
-
   // while (true) {
     
   // }
 }
 
 // Helper function to iterate through a array and peek ahead at it
-fun <T> peekAhead(ls: Iterable<T>): List<Triple<T, T?, T?>> {
+fun <T> peekAhead3(ls: Iterable<T>): List<Triple<T, T?, T?>> {
   var prev2: T? = null
   var prev: T? = null
 

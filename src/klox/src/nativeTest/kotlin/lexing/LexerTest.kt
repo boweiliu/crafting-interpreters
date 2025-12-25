@@ -33,29 +33,29 @@ class LexerTest {
 class PeekAheadTest {
   @Test
   fun itJustRuns() {
-    peekAhead(listOf("a", "b", "c"))
+    peekAhead3(listOf("a", "b", "c"))
   }
 
   @Test
   fun itJustRunsOnEmpty() {
-    val result = peekAhead(listOf<String>())
+    val result = peekAhead3(listOf<String>())
     result.size.shouldBe(0)
   }
 
   @Test
   fun itJustRunsOnOne() {
-    val result = peekAhead(listOf<String>("A"))
+    val result = peekAhead3(listOf<String>("A"))
     result.shouldBe(listOf(Triple("A", null, null)))
   }
 
   @Test
   fun itJustRunsOnMany() {
-    val result = peekAhead(listOf<String>("A", "B", "C", "D"))
+    val result = peekAhead3<Char>("ABCD".toCharArray().toList())
     result.shouldBe(listOf(
-      Triple("A", "B", "C"),
-      Triple("B", "C", "D"),
-      Triple("C", "D", null),
-      Triple("D", null, null),
+      Triple('A', 'B', 'C'),
+      Triple('B', 'C', 'D'),
+      Triple('C', 'D', null),
+      Triple('D', null, null),
     ))
   }
 
