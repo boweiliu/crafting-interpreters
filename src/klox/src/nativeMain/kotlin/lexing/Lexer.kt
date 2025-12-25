@@ -15,15 +15,24 @@ suspend fun LexScope.coRun(
 
   // TODO: start scanning
 
-  // while (true) {
-    
-  // }
+  val numberedLines: List<Pair<Int, String>> = ss.split("\n")
+    .mapIndexed { idx, ln -> Pair(idx + 1, ln) }
+  val numLines = numberedLines.size
+
+  val indexedCharacters: List<Pair<Int, Char>> = numberedLines
+    .flatMap { (idx, ln) -> ln.toCharArray().toList().map { ch -> Pair(idx, ch) } }
+
+  numberedLines.peekAhead3().forEach { it ->
+    val (curr, nxt1, nxt2) = it
+  }
+  yieldT(Token(TokenType.EOF, "", null, numLines + 1, sourceFname))
 }
 
 // Helper function to iterate through a array and peek ahead at it
-fun <T> peekAhead3(ls: Iterable<T>): List<Triple<T, T?, T?>> {
+fun <T> Iterable<T>.peekAhead3(): List<Triple<T, T?, T?>> {
   var prev2: T? = null
   var prev: T? = null
+  val ls: Iterable<T> = this
 
   return sequence<Triple<T, T?, T?>> {
     ls.forEach { it -> 
@@ -44,9 +53,7 @@ fun <T> peekAhead3(ls: Iterable<T>): List<Triple<T, T?, T?>> {
 
 
 
-
-
-fun run(ss: String, sourceFname: String): List<InterpreterError> {
+fun run(ss: String, sourceFname: String): Pair<List<Token>, List<InterpreterError>> {
   val lexingBlobs = sequence<EmittableLexingBlob> {
     coRun(ss, sourceFname,
       { t -> yield(EmittableLexingBlob.Tok(t)) },
@@ -65,7 +72,7 @@ fun run(ss: String, sourceFname: String): List<InterpreterError> {
     }
   }
 
-  return es
+  return Pair(ts, es)
 }
 
 sealed interface EmittableLexingBlob {

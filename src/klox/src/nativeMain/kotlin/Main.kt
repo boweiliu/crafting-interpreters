@@ -33,7 +33,7 @@ fun runFile(fname: String): Int {
   }.toList<String>()
 
   val fileContents: String = lines.joinToString("\n")
-  val errors = run(fileContents, fname)
+  val (_, errors) = run(fileContents, fname)
 
   if (errors.size > 0) {
     // Report all the errors
@@ -52,7 +52,7 @@ fun runPrompt(): Int {
       print("\n")
       return 0
     }
-    val errors = run(ln, "<stdout>")
+    val (_, errors) = run(ln, "<stdout>")
     errors.forEach { it.reportToStdout() }
   }
 }

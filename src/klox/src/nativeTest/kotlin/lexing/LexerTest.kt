@@ -17,40 +17,41 @@ class LexerTest {
   }
 
   @Test
-  @Ignore
   fun itLexesEof() {
-    val tokens = run("", "<stdin>")
-    tokens.size.shouldBe(0)
+    val (tokens, _) = run("", "<stdin>")
+    tokens.size.shouldBe(1)
+    tokens.shouldBe(listOf(Token(TokenType.EOF, "", null, 2, "<stdin>")))
   }
 
   @Test
   fun wrongItLexesErrors() {
-    val errs = run("", "<stdin>")
+    val (_, errs) = run("", "<stdin>")
     errs.size.shouldBe(1)
   }
 }
 
+
 class PeekAheadTest {
   @Test
   fun itJustRuns() {
-    peekAhead3(listOf("a", "b", "c"))
+    listOf("a", "b", "c").peekAhead3()
   }
 
   @Test
   fun itJustRunsOnEmpty() {
-    val result = peekAhead3(listOf<String>())
+    val result = listOf<String>().peekAhead3()
     result.size.shouldBe(0)
   }
 
   @Test
   fun itJustRunsOnOne() {
-    val result = peekAhead3(listOf<String>("A"))
+    val result = listOf<String>("A").peekAhead3()
     result.shouldBe(listOf(Triple("A", null, null)))
   }
 
   @Test
   fun itJustRunsOnMany() {
-    val result = peekAhead3<Char>("ABCD".toCharArray().toList())
+    val result = "ABCD".toCharArray().toList().peekAhead3()
     result.shouldBe(listOf(
       Triple('A', 'B', 'C'),
       Triple('B', 'C', 'D'),
