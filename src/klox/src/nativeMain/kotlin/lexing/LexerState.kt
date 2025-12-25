@@ -24,14 +24,13 @@ fun getIntermediateState(
   curr: Char?, nxt1: Char?, nxt2: Char?
 ): LexerState? {
 
-  if (old == LexerState.EOF)
-    return null
-  if (curr == null)
-    return LexerState.EOF
-
   return when(old) {
+    LexerState.EOF ->
+      null
     LexerState.DEFAULT -> {
       when {
+        curr == null ->
+          LexerState.EOF
         curr == '"' ->
           LexerState.STRING_START
         curr == '/' && nxt1 == '/' ->
@@ -45,13 +44,16 @@ fun getIntermediateState(
       }
     }
     LexerState.STRING ->
-      null
+      if (curr == null) LexerState.EOF
+      else null
     LexerState.COMMENT -> {
-      if (curr == '\n') LexerState.DEFAULT
+      if (curr == null) LexerState.EOF
+      else if (curr == '\n') LexerState.DEFAULT
       else null
     }
     LexerState.NUMBER -> {
-      if (curr.isLetter() || curr == '_') null
+      if (curr == null) LexerState.EOF
+      else if (curr.isLetter() || curr == '_') null
       else if (curr.isDigit()) null
       else LexerState.DEFAULT
     }
@@ -85,21 +87,20 @@ fun computeForChar(
       return LQuad(null, InterpreterErrorType.UNRECOGNIZED_CHARACTER.toLError(curr))
     }
     LexerState.STRING_START -> {
-        return LQuad(null, null, false, LexerState.STRING)
+      stateData.builder.append(curr)
+      return LQuad(null, null, false, LexerState.STRING)
     }
     LexerState.STRING -> {
       stateData.builder.append(curr)
       if (curr == '"') {
         return LQuad(null, null, false, LexerState.DEFAULT)
       }
-      return LQuad()
     }
     LexerState.COMMENT -> {
       if (curr == '\n') {
         return LQuad(null, null, false, LexerState.DEFAULT)
       } else {
         stateData.builder.append(curr)
-        return LQuad()
       }
     }
     LexerState.NUMBER -> {
@@ -107,10 +108,10 @@ fun computeForChar(
     else -> {
     }
   }
-  return LQuad(null, null, false, null)
+  return LQuad()
 }
 
-data class LTriple<T1 : LToken?, T2 : LError?, T3: LexerState?>(
+data class LTriple<T1 : LToken?, T2 : LError?, T3: LexerStateData?>(
   val first: T1? = null,
   val second: T2? = null,
   val third: T3? = null,
@@ -119,7 +120,7 @@ data class LTriple<T1 : LToken?, T2 : LError?, T3: LexerState?>(
 // Compute how to handle a state transition (usually by dumping the stringbuilder data out).
 fun computeForTransition(
   oldStateData: LexerStateData, toState: LexerState, cause: Char?
-): LTriple<LToken?, LError?, LexerState?> {
+): LTriple<LToken?, LError?, LexerStateData?> {
   return when (oldStateData.state) {
     LexerState.EOF,
     LexerState.DEFAULT -> 
@@ -127,12 +128,17 @@ fun computeForTransition(
     LexerState.COMMENT ->
       LTriple(LToken(TokenType.COMMENT, oldStateData.builder.toString()))
     LexerState.STRING_START -> {
-      LTriple()
+      LTriple(null, null, oldStateData)
     }
     LexerState.STRING -> {
       val lexeme = oldStateData.builder.toString()
-      val stringVal = LiteralVal.StringVal(lexeme.substring(1, lexeme.length - 1))
-      LTriple(LToken(TokenType.STRING, lexeme, stringVal))
+
+      if (toState == LexerState.EOF)
+        LTriple(null, InterpreterErrorType.UNEXPECTED_EOF_STRING.toLError(lexeme))
+      else {
+        val stringVal = LiteralVal.StringVal(lexeme.substring(1, lexeme.length - 1))
+        LTriple(LToken(TokenType.STRING, lexeme, stringVal))
+      }
     }
     else ->
       LTriple(null, InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(oldStateData.state))

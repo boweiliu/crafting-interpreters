@@ -51,8 +51,8 @@ class LexerTest {
   @Test
   fun itErrorsUnmatchedString() {
     val (tokens, errs) = run("\"", "<stdin>")
-    tokens.shouldHaveSize(0)
     errs.shouldHaveSize(1)
+    tokens.shouldHaveSize(1)
   }
 
   @Test

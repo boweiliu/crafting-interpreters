@@ -51,8 +51,8 @@ suspend fun LexScope.coRun(
       )
       stateData = LexerStateData(
         state = intermediateState,
-        // xferData?.builder ?: StringBuilder(),
-        // xferData?.didError ?: false,
+        xferData?.builder ?: StringBuilder(),
+        xferData?.didError ?: false,
       )
       maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
       maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
@@ -67,10 +67,14 @@ suspend fun LexScope.coRun(
 
     // 4. do a post transition
     maybeNewState?. let { newState ->
-      val (maybeT, maybeE) = computeForTransition(
+      val (maybeT, maybeE, xferData) = computeForTransition(
         stateData, newState, cause = curr
       )
-      stateData = LexerStateData(state = newState)
+      stateData = LexerStateData(
+        state = newState,
+        xferData?.builder ?: StringBuilder(),
+        xferData?.didError ?: false,
+      )
       maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
       maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
     }
