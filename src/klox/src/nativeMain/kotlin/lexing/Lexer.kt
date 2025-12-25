@@ -104,27 +104,54 @@ suspend fun LexScope.coRun(
             lexerStateBuilder.append(curr)
         }
       }
-      "NUMBER" -> {
+      "NUMBER", "NUMBER_ERROR" -> {
         when {
-          curr?.isLetter() == true -> {
-            yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character while parsing number: expected digit or terminal but got ${curr}"))
+          (curr?.isLetter() == true || curr == '_') -> {
+            yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character while parsing number '${lexerStateBuilder}': expected digit or terminal but got '${curr}'"))
+            lexerState = "NUMBER_ERROR"
+            lexerStateBuilder.append(curr)
           }
+
           curr?.isDigit() == true ->
             lexerStateBuilder.append(curr)
+
           curr == '.' -> { // tricky case
+            if (lexerStateBuilder.contains(".")) {
+              yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character while parsing number '${lexerStateBuilder}': expected digit or terminal but got '${curr}'"))
+              lexerState = "NUMBER_ERROR"
+            }//  else if (nxt1?.isDigit() != true) {
+              // yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character while parsing number '${lexerStateBuilder}': expected numbers following decimal point but got '${nxt1}'"))
+              // lexerState = "NUMBER_ERROR"
+            // }
             lexerStateBuilder.append(curr)
           }
-          else -> {
+
+          (lexerState == "NUMBER") -> {
             lexerState = "DEFAULT"
             val lexeme = lexerStateBuilder.toString()
-            if (lexeme.contains(".")) {
-              val doubleVal = LiteralVal.DoubleVal(lexeme.toDouble())
-              yieldT(Token(TokenType.NUMBER, lexeme, doubleVal, lineNo, sourceFname))
+            if (lexeme.lastOrNull() == '.') {
+              yieldE(InterpreterError(lineNo, sourceFname, "Illegal final decimal found when parsing number '${lexerStateBuilder}'"))
+            } else if (lexeme.contains(".")) {
+              lexeme.toDoubleOrNull()?.let { LiteralVal.DoubleVal(it) } ?.let {
+		yieldT(Token(TokenType.NUMBER, lexeme, it, lineNo, sourceFname))
+              } ?: 
+                yieldE(InterpreterError(lineNo, sourceFname, "Could not parse float '${lexeme}', ignoring"))
             } else {
-              val intVal = LiteralVal.IntVal(lexeme.toInt())
-              yieldT(Token(TokenType.NUMBER, lexeme, intVal, lineNo, sourceFname))
+              lexeme.toIntOrNull()?.let { LiteralVal.IntVal(it) } ?.let {
+                yieldT(Token(TokenType.NUMBER, lexeme, it, lineNo, sourceFname))
+              } ?: lexeme.toDoubleOrNull()?.let { LiteralVal.DoubleVal(it) } ?.let {
+		yieldT(Token(TokenType.NUMBER, lexeme, it, lineNo, sourceFname))
+              } ?: 
+                yieldE(InterpreterError(lineNo, sourceFname, "Could not parse float or int '${lexeme}', ignoring"))
             }
 
+            if (curr == null) yieldT(Token(TokenType.EOF, "", null, lineNo, sourceFname))
+          }
+          lexerState == "NUMBER_ERROR" -> {
+            lexerState = "DEFAULT"
+            if (curr == null) yieldT(Token(TokenType.EOF, "", null, lineNo, sourceFname))
+          }
+          else -> {
             if (curr == null) yieldT(Token(TokenType.EOF, "", null, lineNo, sourceFname))
           }
         }

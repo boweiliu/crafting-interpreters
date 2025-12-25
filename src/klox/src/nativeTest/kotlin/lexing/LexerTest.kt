@@ -118,15 +118,63 @@ class LexerTest {
 
   @Test
   fun itLexesNumbers() {
-    val (tokens, errs) = run("123 4.5", "<stdin>")
+    val (tokens, errs) = run("123 4.5 -0", "<stdin>")
     errs.shouldHaveSize(0)
-    tokens.shouldHaveSize(3)
+    tokens.shouldHaveSize(5)
     tokens.map { it.type }.shouldBe(listOf(
       TokenType.NUMBER,
+      TokenType.NUMBER,
+      TokenType.MINUS,
       TokenType.NUMBER,
       TokenType.EOF
     ))
     tokens.take(2).map { it.literal!!.vl }.shouldBe(listOf<Any>(123, 4.5))
+  }
+
+  @Test
+  fun itErrorsInvalidNumber1() {
+    val (tokens, errs) = run("1.1..1", "<stdin>")
+    errs.shouldHaveSize(2) // one for each extra dot
+    tokens.shouldHaveSize(1)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.EOF
+    ))
+  }
+
+  @Test
+  fun itParsesBigIntegerAsFloat() {
+    val (tokens, errs) = run("666666666666666666666666666666666666666666666666666666666666666666", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(2)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.NUMBER,
+      TokenType.EOF
+    ))
+  }
+
+  @Test
+  fun itLexesSomethingDotZero() {
+    val (tokens, errs) = run("\"soo\".0", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(4)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.STRING,
+      TokenType.DOT,
+      TokenType.NUMBER,
+      TokenType.EOF,
+    ))
+  }
+
+
+  @Test
+  fun itErrorsInvalidNumbers() {
+    val (tokens, errs) = run("11.x * 2.2f 3_3 4d4 5.* 6.", "<stdin>")
+    errs.shouldHaveSize(6)
+    tokens.shouldHaveSize(2)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.STAR,
+      TokenType.EOF
+    ))
   }
 
   @Test

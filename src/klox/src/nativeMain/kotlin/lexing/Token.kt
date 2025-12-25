@@ -4,7 +4,7 @@ enum class TokenType {
   // literals
   STRING, // done
   IDENTIFIER,
-  NUMBER,
+  NUMBER, // done
   COMMENT, // done
 
   COMMA, // done
@@ -95,6 +95,9 @@ val Token.Companion.LOOKUP_1CH_TO_TOKEN: Map<Char, TokenType>
     '*' to TokenType.STAR,
     '/' to TokenType.SLASH,
     '%' to TokenType.PERCENT,
+
+    // tricky but we took care of this
+    '.' to TokenType.DOT,
 
     // remember to handle these as bigrams
     '!' to TokenType.BANG,
