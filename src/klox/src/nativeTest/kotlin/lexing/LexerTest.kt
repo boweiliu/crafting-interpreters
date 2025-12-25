@@ -117,6 +117,17 @@ class LexerTest {
   }
 
   @Test
+  fun itLexesNumbers() {
+    val (tokens, errs) = run("123 4.5", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(3)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.NUMBER,
+      TokenType.NUMBER,
+      TokenType.EOF
+    ))
+  }
+  @Test
   fun itLexesErrors() {
     val (tokens, errs) = run("^", "<stdin>")
     errs.shouldHaveSize(1)

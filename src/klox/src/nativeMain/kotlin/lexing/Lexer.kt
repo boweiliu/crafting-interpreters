@@ -32,82 +32,108 @@ suspend fun LexScope.coRun(
     val (curr, nxt1, nxt2) = Triple(currPair?.second, nxt1Pair?.second, nxt2Pair?.second)
 
     // BODY goes here
-    if (lexerState == "SKIP_ONE") {
-      lexerState = "DEFAULT"
-      return@forEach
-    } else if (lexerState == "DEFAULT") {
-      when {
-        curr == null -> {
-          yieldT(Token(TokenType.EOF, "", null, lineNo, sourceFname))
-          return@forEach
-        }
-        curr == '"' -> {
-          lexerState = "STRING"
-          lexerStateBuilder.clear()
-          lexerStateBuilder.append(curr)
-          return@forEach
-        }
-        curr == '/' && nxt1 == '/' -> {
-          lexerState = "COMMENT"
-          lexerStateBuilder.clear()
-          lexerStateBuilder.append(curr)
-          return@forEach
-        }
-        curr.isDigit() -> {
-          lexerState = "NUMBER"
-          lexerStateBuilder.clear()
-          lexerStateBuilder.append(curr)
-          return@forEach
-        }
-        curr == ' ' || curr == '\t' || curr == '\n' || curr == '\r' -> {
-          // ignore whitespace
-          return@forEach
-        }
-        (tryDoMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN, yieldT, lineNo, sourceFname)) -> {
-          lexerState = "SKIP_ONE"
-          return@forEach 
-        }
-        (tryDoMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN, yieldT, lineNo, sourceFname)) ->
-          return@forEach 
-        else ->
-          // dont forget to error if we are confused
-          yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character '${curr}'"))
-      }
-    } else if (lexerState == "STRING") {
-      lexerStateBuilder.append(curr)
-      when (curr) {
-        null -> {
-          yieldE(InterpreterError(numLines + 1, sourceFname, "Unexpected end of file while parsing string"))
-        }
-        '"' -> {
+    when (lexerState) {
+      "SKIP_ONE" -> {
+        if (curr == null) {
+          yieldE(InterpreterError(lineNo, sourceFname, "Unexpected end of file while parsing bigram"))
+        } else {
           lexerState = "DEFAULT"
-          val lexeme = lexerStateBuilder.toString()
-          val stringVal = lexeme.substring(1, lexeme.length - 1)
-          yieldT(Token(TokenType.STRING, lexeme, LiteralVal.StringVal(stringVal), lineNo, sourceFname))
         }
       }
-    } else if (lexerState == "COMMENT") {
-      when(curr) {
-        null -> {
-          val lexeme = lexerStateBuilder.toString()
-          yieldT(Token(TokenType.COMMENT, lexeme, null, lineNo, sourceFname))
-          yieldT(Token(TokenType.EOF, "", null, lineNo, sourceFname))
+      "DEFAULT" -> {
+        when {
+          curr == null -> {
+            yieldT(Token(TokenType.EOF, "", null, lineNo, sourceFname))
+            return@forEach
+          }
+          curr == '"' -> {
+            lexerState = "STRING"
+            lexerStateBuilder.clear()
+            lexerStateBuilder.append(curr)
+            return@forEach
+          }
+          curr == '/' && nxt1 == '/' -> {
+            lexerState = "COMMENT"
+            lexerStateBuilder.clear()
+            lexerStateBuilder.append(curr)
+            return@forEach
+          }
+          curr.isDigit() -> {
+            lexerState = "NUMBER"
+            lexerStateBuilder.clear()
+            lexerStateBuilder.append(curr)
+            return@forEach
+          }
+          curr == ' ' || curr == '\t' || curr == '\n' || curr == '\r' -> {
+            // ignore whitespace
+            return@forEach
+          }
+          (tryDoMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN, yieldT, lineNo, sourceFname)) -> {
+            lexerState = "SKIP_ONE"
+            return@forEach 
+          }
+          (tryDoMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN, yieldT, lineNo, sourceFname)) ->
+            return@forEach 
+          else ->
+            // dont forget to error if we are confused
+            yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character '${curr}'"))
         }
-        '\n' -> {
-          lexerState = "DEFAULT"
-          val lexeme = lexerStateBuilder.toString()
-          yieldT(Token(TokenType.COMMENT, lexeme, null, lineNo, sourceFname))
+      }
+      "STRING" -> {
+        lexerStateBuilder.append(curr)
+        when (curr) {
+          null ->
+            yieldE(InterpreterError(lineNo, sourceFname, "Unexpected end of file while parsing string"))
+          '"' -> {
+            lexerState = "DEFAULT"
+            val lexeme = lexerStateBuilder.toString()
+            val stringVal = LiteralVal.StringVal(lexeme.substring(1, lexeme.length - 1))
+            yieldT(Token(TokenType.STRING, lexeme, stringVal, lineNo, sourceFname))
+          }
         }
-        else -> 
-          lexerStateBuilder.append(curr)
+      }
+      "COMMENT" -> {
+        when(curr) {
+          null, '\n' -> {
+            lexerState = "DEFAULT"
+            val lexeme = lexerStateBuilder.toString()
+            yieldT(Token(TokenType.COMMENT, lexeme, null, lineNo, sourceFname))
+            if (curr == null) yieldT(Token(TokenType.EOF, "", null, lineNo, sourceFname))
+          }
+          else -> 
+            lexerStateBuilder.append(curr)
+        }
+      }
+      "NUMBER" -> {
+        when {
+          curr?.isLetter() == true -> {
+            yieldE(InterpreterError(lineNo, sourceFname, "Unexpected character while parsing number: expected digit or terminal but got ${curr}"))
+          }
+          curr?.isDigit() == true ->
+            lexerStateBuilder.append(curr)
+          curr == '.' -> { // tricky case
+            lexerStateBuilder.append(curr)
+          }
+          else -> {
+            lexerState = "DEFAULT"
+            val lexeme = lexerStateBuilder.toString()
+            if (lexeme.contains(".")) {
+              val doubleVal = LiteralVal.DoubleVal(lexeme.toDouble())
+              yieldT(Token(TokenType.NUMBER, lexeme, doubleVal, lineNo, sourceFname))
+            } else {
+              val intVal = LiteralVal.IntVal(lexeme.toInt())
+              yieldT(Token(TokenType.NUMBER, lexeme, intVal, lineNo, sourceFname))
+            }
+
+            if (curr == null) yieldT(Token(TokenType.EOF, "", null, lineNo, sourceFname))
+          }
+        }
+      }
+      else -> {
+        yieldE(InterpreterError(lineNo, sourceFname, "Unexpected lexer state ${lexerState}"))
       }
     }
   }
-//   if (lexerState == "DEFAULT") {
-//     yieldT(Token(TokenType.EOF, "", null, numLines + 1, sourceFname))
-//   } else {
-//     yieldE(InterpreterError(numLines + 1, sourceFname, "Unexpected end of file while parsing string"))
-//   }
 }
 
 // Helper function to munch the simple singleton characters. Remember to greedy much 2ch first!!
