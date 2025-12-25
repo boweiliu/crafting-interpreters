@@ -26,7 +26,9 @@ suspend fun LexScope.coRun(
   // theres an implicit state diagram
   var lexerState: String = "DEFAULT"
   var lexerStateBuilder: StringBuilder = StringBuilder()
+
   var chompExtraState: Boolean = false
+  var stateData: LexerStateData = LexerStateData()
 
   indexedCharacters.peekAhead3().forEach { (currPair, nxt1Pair, nxt2Pair) ->
     val lineNo: Int = currPair?.first ?: numLines
@@ -39,32 +41,32 @@ suspend fun LexScope.coRun(
       return@forEach
     }
 
-    /// // 1. compute intermediate/preparatory state
-    /// val maybeIntermediateState = getIntermediateState(stateData.state, curr, nxt1, nxt2)
+    // 1. compute intermediate/preparatory state
+    val maybeIntermediateState = getIntermediateState(stateData.state, curr, nxt1, nxt2)
 
-    /// // 2. handle state transition
-    /// maybeIntermediateState?.let { intermediateState -> 
-    ///   val (maybeT, maybeE) = computeForTransition(stateData, intermediateState, cause = curr)
-    ///   stateData = LexerStateData(state=intermediateState)
-    ///   maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
-    ///   maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
-    /// }
+    // 2. handle state transition
+    maybeIntermediateState?.let { intermediateState -> 
+      val (maybeT, maybeE) = computeForTransition(stateData, intermediateState, cause = curr)
+      stateData = LexerStateData(state = intermediateState)
+      maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
+      maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
+    }
 
-    /// // 3. process the character in the intermediate state
-    /// val (maybeT, maybeE, shouldChompExtra, maybeNewState) =
-    ///   computeForChar(stateData, curr, nxt1, nxt2)
-    /// maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
-    /// maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
-    /// if (shouldChompExtra) chompExtraState = true
+    // 3. process the character in the intermediate state
+    val (maybeT, maybeE, shouldChompExtra, maybeNewState) =
+      computeForChar(stateData, curr, nxt1, nxt2)
+    maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
+    maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
+    if (shouldChompExtra) chompExtraState = true
 
-    /// // 4. do a post transition
-    /// maybeNewState ?. let { newState ->
-    ///   val (maybeT, maybeE) = computeForTransition(stateData, newState, cause = curr)
-    ///   stateData = LexerStateData(state=intermediateState)
-    ///   maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
-    ///   maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
-    /// }
-    /// return@forEach
+    // 4. do a post transition
+    maybeNewState?. let { newState ->
+      val (maybeT, maybeE) = computeForTransition(stateData, newState, cause = curr)
+      stateData = LexerStateData(state = newState)
+      maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
+      maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
+    }
+    return@forEach
     
 
     // BODY goes here
