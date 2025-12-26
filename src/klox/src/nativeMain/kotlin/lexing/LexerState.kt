@@ -21,7 +21,6 @@ enum class LexerState {
   COMMENT,
   NUMBER,
   ALPHA,
-
   EOF,
 }
 
