@@ -31,18 +31,20 @@ data class LexerStateData(
   val state: LexerState = LexerState.DEFAULT,
   val builder: StringBuilder = StringBuilder(),
   // We keep parsing and just note down the error
-  val didError: Boolean = false,
+  var didError: Boolean = false,
 )
 
-sealed interface LDatum {
-  data class Er(val er: LError): LDatum
-  data class Up(val up: LUpdate): LDatum
-  data class Tr(val tr: LTransition): LDatum
-  data class To(val to: LToken): LDatum
+sealed class LDatum(val ty: String) {
+  data class Er(val er: LError): LDatum("Er")
+  data class UpC(val up: LUpdateC): LDatum("Up")
+  data class UpE(val up: LUpdateE): LDatum("Up")
+  data class Tr(val tr: LTransition): LDatum("Tr")
+  data class To(val to: LToken): LDatum("To")
 }
 
 data class LTransition(val st: LexerState)
-data class LUpdate(val ch: Char, val didError: Boolean)
+data class LUpdateC(val ch: Char)
+data class LUpdateE(val didError: Boolean)
 
 data class LDatas(val stuff: List<LDatum> = listOf()) {
   companion object {
@@ -51,7 +53,8 @@ data class LDatas(val stuff: List<LDatum> = listOf()) {
         when (dat) {
           null -> null
           is LTransition -> LDatum.Tr(dat)
-          is LUpdate     -> LDatum.Up(dat)
+          is LUpdateC    -> LDatum.UpC(dat)
+          is LUpdateE    -> LDatum.UpE(dat)
           is LError      -> LDatum.Er(dat)
           is LToken      -> LDatum.To(dat)
           else -> null
@@ -64,7 +67,15 @@ data class LDatas(val stuff: List<LDatum> = listOf()) {
 fun LError.Companion.BAD_STATE(ll: LexerStateData, curr: Char?) =
   InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(ll.state)
 
-fun doStuff(
+fun LError.Companion.EARLY_EOF(ll: LexerStateData, curr: Char?) =
+  if (ll.state == LexerState.BIGRAM)
+    InterpreterErrorType.UNEXPECTED_EOF_BIGRAM.toLError()
+  else if (ll.state == LexerState.STRING)
+    InterpreterErrorType.UNEXPECTED_EOF_STRING.toLError(ll.builder.toString())
+  else
+    InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(ll.state)
+
+fun computeLexerActionDatas(
   old: LexerStateData,
   curr: Char?, nxt1: Char?, nxt2: Char?
 ): LDatas {
@@ -72,23 +83,23 @@ fun doStuff(
     old.state == LexerState.EOF -> {
       return LDatas.of(LError.BAD_STATE(old, curr))
     }
+    curr == null -> {
+      if (old.state == LexerState.BIGRAM ||
+          old.state == LexerState.STRING) {
+        return LDatas.of(
+          LError.EARLY_EOF(old, curr),
+          LTransition(LexerState.EOF),
+          LToken(TokenType.EOF, ""),
+        )
+      } else 
+        return LDatas.of(LTransition(LexerState.EOF), LToken(TokenType.EOF, ""))
+    }
 
 
   }
   return LDatas()
 }
 /*
-    cur == null -> {
-      if (old.state == LexerState.BIGRAM ||
-          old.state == LexerState.STRING) {
-        return LDatas(
-          LError.EARLY_EOF(old, curr),
-          LTransition(LexerState.EOF),
-          LToken(TokenType.EOF, ""),
-        )
-      } else 
-        return LDatas(LTransition(LexerState.EOF), LToken(TokenType.EOF, ""))
-    }
     old.state == LexerState.STRING -> {
       when {
         curr == '"' ->
