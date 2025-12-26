@@ -31,6 +31,8 @@ Control
 * fndef
 * return
 
+* Comments via "//"
+
 * Closures
  * and closure scope
 * Classes
@@ -44,17 +46,16 @@ Control
 
 ## spec additions from me
 
-* Comments via "//"
 * Type comments via ":"
 * floor()
+* chr(65) == "A", ord("A") == 65
 * variable name reuse aka shadowing aka redeclaration
 * inline named function definitions
-* chr(65) == "A", ord("A") == 65
+* interfaces and "restricts" (compiler-enabled checks to ensure interfaces are respected)
 
 note that lox has:
 * no arrays (linked lists via classes or closures)
 * dicts (via named object properties)
-
 
 # Examples
 
