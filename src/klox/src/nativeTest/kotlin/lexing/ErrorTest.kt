@@ -23,5 +23,9 @@ class ErrorTest {
   }
 }
 
-
-
+class StacktraceTest {
+  @Test
+  fun itJustRuns() {
+    getCurrentStacktrace()
+  }
+}

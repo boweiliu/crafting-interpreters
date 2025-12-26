@@ -37,7 +37,7 @@ fun runFile(fname: String): Int {
 
   if (errors.size > 0) {
     // Report all the errors
-    errors.forEach { it.reportToStdout() }
+    errors.forEach { err -> err.reportToStdout() }
     return 65
   } else {
     return 0
@@ -53,6 +53,6 @@ fun runPrompt(): Int {
       return 0
     }
     val (_, errors) = run(ln, "<stdout>")
-    errors.forEach { it.reportToStdout() }
+    errors.forEach { err -> err.reportToStdout() }
   }
 }

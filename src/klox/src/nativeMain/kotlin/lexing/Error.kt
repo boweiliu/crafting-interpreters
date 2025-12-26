@@ -1,4 +1,38 @@
+// import platform.posix.*
+// import platform.posix.readlink;
+// import okio.*
+
 package lexing
+
+import okio.*
+
+// fun getCurrentPid(): Int = 0
+
+// @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+// fun getCurrentExecutablePath(): String {
+//   memScoped {
+//     readlink("/proc/self/exe")
+//   }
+// }
+
+// hmmm. we have pointer addrs but not files/lines.
+// solution: look up our exe file, then run /bin/bash -c 'addr2line -C -e ME.EXE addr'
+// to look up your exe file, first find our pid and then read /proc/pid/exe
+// or just read /proc/self/exe
+@OptIn(kotlin.experimental.ExperimentalNativeApi::class)
+fun getCurrentStacktrace(): String {
+  val e = Throwable()
+  val structured: Array<String> = e.getStackTrace()
+  structured.take(3).forEach { it -> 
+    // println(it)
+    val entries: List<String> = it.split("\\s+".toRegex())
+    val (idx, fname, addr) = entries.take(3)
+    val rest = entries.drop(3).joinToString(" ")
+    println(listOf<String>(idx, fname, addr, rest).joinToString(" | "))
+  }
+  val fullString = e.stackTraceToString()
+  return ""
+}
 
 data class InterpreterError(
   val locationLineNo: Int,
@@ -6,7 +40,7 @@ data class InterpreterError(
   val message: String,
 ) {
   constructor(errType: InterpreterErrorType, locationLineNo: Int, locationFileName: String, message: String) :
-    this(locationLineNo, locationFileName, "[${errType.sev}${errType.code}]: " + message)
+    this(locationLineNo, locationFileName, "[${errType.sev}${errType.code}]: " + message + "\n\n" + getCurrentStacktrace())
 
   companion object {}
 }
