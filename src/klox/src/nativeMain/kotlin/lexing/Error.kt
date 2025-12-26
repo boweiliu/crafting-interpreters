@@ -40,7 +40,7 @@ val InterpreterErrorType.Companion.MESSAGE_TEMPLATE_MAP: Map<InterpreterErrorTyp
     InterpreterErrorType.ILLEGAL_CHARACTER_NUMBER to
       "Illegal character while parsing number '%s': expected digit or decimal but got '%s'",
     InterpreterErrorType.ILLEGAL_FINAL_DECIMAL_NUMBER to
-      "Illegal character while parsing number '%s': expected numbers following decimal point but got %s",
+      "Illegal character while parsing number '%s': expected numbers following decimal point but did not find one",
     InterpreterErrorType.UNPARSEABLE_DOUBLE_NUMBER to
       "Could not parse float '%s', ignoring",
     InterpreterErrorType.UNPARSEABLE_INT_NUMBER to

@@ -75,6 +75,15 @@ fun LError.Companion.EARLY_EOF(ll: LexerStateData, curr: Char?) =
   else
     InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(ll.state)
 
+fun LError.Companion.NUMBER_NO_LETTER(ll: LexerStateData, curr: Char?) =
+  InterpreterErrorType.ILLEGAL_CHARACTER_NUMBER.toLError(ll.builder.toString(), curr)
+fun LError.Companion.NUMBER_DOUBLE_DECIMAL(ll: LexerStateData, curr: Char?) =
+  InterpreterErrorType.ILLEGAL_CHARACTER_NUMBER.toLError(ll.builder.toString(), curr)
+fun LError.Companion.NUMBER_FINAL_DECIMAL(ll: LexerStateData, curr: Char?) =
+  InterpreterErrorType.ILLEGAL_FINAL_DECIMAL_NUMBER.toLError(ll.builder.toString(), curr)
+fun LError.Companion.UNKNOWN_CHAR(ll: LexerStateData, curr: Char?) =
+  InterpreterErrorType.UNRECOGNIZED_CHARACTER.toLError(curr)
+
 fun computeLexerActionDatas(
   old: LexerStateData,
   curr: Char?, nxt1: Char?, nxt2: Char?
@@ -102,56 +111,52 @@ fun computeLexerActionDatas(
           return LDatas.of(LUpdateC(curr))
       }
     }
-
-
-  }
-  return LDatas()
-}
-/*
     old.state == LexerState.COMMENT -> {
       when {
         curr == '\n' ->
           return LDatas.of(LTransition(LexerState.DEFAULT))
         else ->
-          return LDatas.of(LUpdate(curr))
+          return LDatas.of(LUpdateC(curr))
       }
     }
   }
   if (old.state == LexerState.NUMBER) {
     when {
       (curr?.isLetter() == true || curr == '_') ->
-        return LDatas.of(LUpdate(curr), LUpdateErr(), LError.NUMBER_NO_LETTER(old, curr))
+        return LDatas.of(LUpdateC(curr), LUpdateE(true), LError.NUMBER_NO_LETTER(old, curr))
       (curr?.isDigit() == true) ->
-        return LDatas.of(LUpdate(curr))
+        return LDatas.of(LUpdateC(curr))
       (curr == '.' && nxt1?.isDigit() == true && !old.builder.contains(".")) -> 
-        return LDatas.of(LUpdate(curr))
+        return LDatas.of(LUpdateC(curr))
       (curr == '.') -> {
         return LDatas.of(
           if (old.builder.contains(".")) LError.NUMBER_DOUBLE_DECIMAL(old, curr) else null,
-          if (nxt?.isDigit()) null else LError.NUMBER_FINAL_DECIMAL(old, curr),
-          LUpdate(curr),
+          if (nxt1?.isDigit() == true) null else LError.NUMBER_FINAL_DECIMAL(old, curr),
+          LUpdateC(curr),
         )
       }
     }
   }
+
   when {
     (curr == ' ' || curr == '\t' || curr == '\n' || curr == '\r') -> 
       return LDatas.of(LTransition(LexerState.DEFAULT))
     (curr == '"') ->
-      return LDatas.of(LTransition(LexerState.STRING), LUpdate(curr))
+      return LDatas.of(LTransition(LexerState.STRING), LUpdateC(curr))
     (curr == '/' && nxt1 == '/') ->
-      return LDatas.of(LTransition(LexerState.COMMENT), LUpdate(curr, null))
+      return LDatas.of(LTransition(LexerState.COMMENT), LUpdateC(curr))
     else ->
       return tryMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN)
-        ?.let { return LDatas.of(LTransition(LexerState.DEFAULT), it) }
-      ?: tryMunch1(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN)
-        ?.let { return LDatas.of(LTransition(LexerState.DEFAULT), it) }
+        ?.let { LDatas.of(LTransition(LexerState.DEFAULT), it) }
+      ?: tryMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN)
+        ?.let { LDatas.of(LTransition(LexerState.DEFAULT), it) }
+      ?: LDatas.of(LError.UNKNOWN_CHAR(old, curr))
   }
+  return LDatas()
 }
+
+/*
 */
-
-
-
 
 
 /* 
