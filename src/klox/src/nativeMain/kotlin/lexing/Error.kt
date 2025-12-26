@@ -1,19 +1,31 @@
-// import platform.posix.*
-// import platform.posix.readlink;
-// import okio.*
-
 package lexing
 
-import okio.*
+import platform.posix.*
+import kotlinx.cinterop.*
+// import platform.posix.readlink;
+
 
 // fun getCurrentPid(): Int = 0
 
+@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+fun getCurrentExecutablePath(): String {
+  return memScoped {
+    val buflen: Int = 32768
+    val len: ULong = (buflen - 1).toULong()
+    val buf = ByteArray(buflen)
+    
+    buf.usePinned { pinned ->
+      readlink("/proc/self/exe", pinned.addressOf(0), len)
+    }
+    buf.decodeToString()
+  }
+}
+
+val EXE_PATH: String by lazy { getCurrentExecutablePath() }
+
+
 // @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
-// fun getCurrentExecutablePath(): String {
-//   memScoped {
-//     readlink("/proc/self/exe")
-//   }
-// }
+// fun getFileFrom
 
 // hmmm. we have pointer addrs but not files/lines.
 // solution: look up our exe file, then run /bin/bash -c 'addr2line -C -e ME.EXE addr'
@@ -28,7 +40,7 @@ fun getCurrentStacktrace(): String {
     val entries: List<String> = it.split("\\s+".toRegex())
     val (idx, fname, addr) = entries.take(3)
     val rest = entries.drop(3).joinToString(" ")
-    println(listOf<String>(idx, fname, addr, rest).joinToString(" | "))
+    println(listOf<String>(idx, fname, addr, EXE_PATH, rest).joinToString(" | "))
   }
   val fullString = e.stackTraceToString()
   return ""
