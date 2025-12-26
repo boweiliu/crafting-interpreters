@@ -122,5 +122,23 @@ val Token.Companion.LOOKUP_2CH_TO_TOKEN: Map<Pair<Char, Char>, TokenType>
 
 val Token.Companion.LOOKUP_ALPHA_TO_TOKEN: Map<String, TokenType>
   get() = mapOf(
-    "" to TokenType.BANG_EQUAL,
+    "AND" to TokenType.AND,
+    "OR" to TokenType.OR,
+    "NOT" to TokenType.NOT,
+    "TRUE" to TokenType.TRUE,
+    "FALSE" to TokenType.FALSE,
+    "NIL" to TokenType.NIL,
+    "PRINT" to TokenType.PRINT,
+    "CLOCK" to TokenType.CLOCK,
+    "FN" to TokenType.FN,
+    "VAR" to TokenType.VAR,
+    "IF" to TokenType.IF,
+    "ELSE" to TokenType.ELSE,
+    "WHILE" to TokenType.WHILE,
+    "FOR" to TokenType.FOR,
+    "FUNCALL" to TokenType.FUNCALL,
+    "RETURN" to TokenType.RETURN,
+    "CLASS" to TokenType.CLASS,
+    "THIS" to TokenType.THIS,
+    "SUPER" to TokenType.SUPER,
   )
