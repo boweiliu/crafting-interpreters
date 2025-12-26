@@ -130,6 +130,13 @@ class LexerTest {
   }
 
   @Test
+  fun itLexesDigits() {
+    val (tokens, errs) = run("1", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(2)
+  }
+
+  @Test
   fun itLexesNumbers() {
     val (tokens, errs) = run("123 4.5 -6*7// hello", "<stdin>")
     errs.shouldHaveSize(0)

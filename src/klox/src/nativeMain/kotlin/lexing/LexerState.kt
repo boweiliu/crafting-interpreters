@@ -129,6 +129,27 @@ fun computeForTransition(
         LTriple(null, InterpreterErrorType.UNPARSEABLE_STRING.toLError(lexeme))
       }
     }
+    LexerState.NUMBER -> {
+      if (oldStateData.didError) {
+        LTriple()
+      } else {
+        val lexeme = oldStateData.builder.toString()
+        if (lexeme.lastOrNull() == '.') 
+          LTriple(null, InterpreterErrorType.ILLEGAL_FINAL_DECIMAL_NUMBER.toLError(lexeme))
+        else if (lexeme.contains("."))
+          lexeme.toDoubleOrNull() ?.let { LiteralVal.DoubleVal(it) } ?.let { 
+            LTriple(LToken(TokenType.NUMBER, lexeme, it))
+          } ?: 
+            LTriple(null, InterpreterErrorType.UNPARSEABLE_DOUBLE_NUMBER.toLError(lexeme))
+        else
+          lexeme.toIntOrNull() ?.let { LiteralVal.IntVal(it) } ?.let { 
+            LTriple(LToken(TokenType.NUMBER, lexeme, it))
+          } ?: 
+          lexeme.toDoubleOrNull() ?.let { LiteralVal.DoubleVal(it) } ?.let { 
+            LTriple(LToken(TokenType.NUMBER, lexeme, it))
+          } ?: LTriple(null, InterpreterErrorType.UNPARSEABLE_INT_NUMBER.toLError(lexeme))
+      }
+    }
     else ->
       LTriple(null, InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(oldStateData.state))
   }
