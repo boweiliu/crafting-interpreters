@@ -72,12 +72,12 @@ fun computeLexerActionDatas(
   }
   if (old.state == LexerState.NUMBER) {
     when {
-      (curr?.isLetter() == true || curr == '_') ->
+      (curr.isLetter() || curr == '_') ->
         return LDatas.of(LUpdateC(curr), LUpdateE(true), LError.NUMBER_NO_LETTER(old, curr))
-      (curr?.isDigit() == true) ->
+      (curr.isDigit()) ->
         return LDatas.of(LUpdateC(curr))
-      (curr == '.' && nxt1?.isDigit() == true && !old.builder.contains(".")) -> 
-        return LDatas.of(LUpdateC(curr))
+      // (curr == '.' && nxt1?.isDigit() == true && !old.builder.contains(".")) -> 
+      //   return LDatas.of(LUpdateC(curr))
       (curr == '.') -> {
         return LDatas.of(
           if (old.builder.contains(".")) LError.NUMBER_DOUBLE_DECIMAL(old, curr) else null,
@@ -93,6 +93,8 @@ fun computeLexerActionDatas(
       return LDatas.of(LTransition(LexerState.DEFAULT))
     (curr == '"') ->
       return LDatas.of(LTransition(LexerState.STRING), LUpdateC(curr))
+    (curr == '/' && nxt1 == '/') ->
+      return LDatas.of(LTransition(LexerState.COMMENT), LUpdateC(curr))
     (curr == '/' && nxt1 == '/') ->
       return LDatas.of(LTransition(LexerState.COMMENT), LUpdateC(curr))
     else ->
