@@ -117,7 +117,7 @@ fun String.fformat(vararg args: Any?): String {
   while (out.contains("%s")) {
     if (insertions.isEmpty())
       break
-    out = out.replace("%s", insertions.removeFirst().toString())
+    out = out.replaceFirst("%s", insertions.removeFirst().toString())
   }
   return out
 }

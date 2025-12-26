@@ -244,7 +244,7 @@ fun LError.Companion.NUMBER_NO_LETTER(ll: LexerStateData, curr: Char?) =
 fun LError.Companion.NUMBER_DOUBLE_DECIMAL(ll: LexerStateData, curr: Char?) =
   InterpreterErrorType.ILLEGAL_CHARACTER_NUMBER.toLError(ll.builder.toString(), curr)
 fun LError.Companion.NUMBER_FINAL_DECIMAL(ll: LexerStateData, curr: Char?) =
-  InterpreterErrorType.ILLEGAL_FINAL_DECIMAL_NUMBER.toLError(ll.builder.toString(), curr)
+  InterpreterErrorType.ILLEGAL_FINAL_DECIMAL_NUMBER.toLError(ll.builder.toString() + curr.toString(), curr)
 fun LError.Companion.UNKNOWN_CHAR(ll: LexerStateData, curr: Char?) =
   InterpreterErrorType.UNRECOGNIZED_CHARACTER.toLError(curr)
 
