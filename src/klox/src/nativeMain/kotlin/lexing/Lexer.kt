@@ -34,6 +34,38 @@ suspend fun LexScope.coRun(
     val lineNo: Int = currPair?.first ?: numLines
     val (curr, nxt1, nxt2) = Triple(currPair?.second, nxt1Pair?.second, nxt2Pair?.second)
 
+    // REFACTOR v2:
+    val (datas, ) = computeLexerActionDatas(stateData, curr, nxt1, nxt2)
+    datas.forEach { it ->
+      when(it) {
+        is LDatum.To -> { 
+          val (token,) = it
+          yieldT(Token(token.type, token.lexeme, token.literal, lineNo, sourceFname))
+        }
+        is LDatum.Er -> {
+          val (err,) = it
+          yieldE(InterpreterError(err.type, lineNo, sourceFname, err.msg))
+        }
+        is LDatum.Tr -> {
+          val (newState,) = it.tr
+          val (maybeT, maybeE) = computeForTransition(
+            stateData, newState, cause = curr
+          )
+          maybeT?.let { yieldT(Token(it.type, it.lexeme, it.literal, lineNo, sourceFname)) }
+          maybeE?.let { yieldE(InterpreterError(it.type, lineNo, sourceFname, it.msg)) }
+          stateData = LexerStateData(newState)
+        }
+        is LDatum.UpC -> {
+          stateData.builder.append(it.up.ch)
+        }
+        is LDatum.UpE -> {
+          stateData.didError = it.up.didError
+        }
+      }
+    }
+
+    return@forEach
+
     // REFACTORED body goes here:
     // 0. If we consumed a bigram last, just skip
     if (chompExtraState) {

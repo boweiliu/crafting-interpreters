@@ -155,10 +155,6 @@ fun computeLexerActionDatas(
   return LDatas()
 }
 
-/*
-*/
-
-
 /* 
 BELOW IS OLD IMPL
 */
