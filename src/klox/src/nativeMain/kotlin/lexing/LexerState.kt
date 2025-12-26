@@ -109,7 +109,7 @@ fun computeLexerActionDatas(
     old.state == LexerState.STRING -> {
       when {
         curr == '"' ->
-          return LDatas.of(LTransition(LexerState.DEFAULT), LUpdateC(curr))
+          return LDatas.of(LUpdateC(curr), LTransition(LexerState.DEFAULT))
         else ->
           return LDatas.of(LUpdateC(curr))
       }
