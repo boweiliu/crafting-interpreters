@@ -2,13 +2,13 @@ package lexing
 
 import platform.posix.*
 import kotlinx.cinterop.*
-// import platform.posix.readlink;
 
 
 // fun getCurrentPid(): Int = 0
 
 @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 fun getCurrentExecutablePath(): String {
+  // THIS WORKS!!
   return memScoped {
     val buflen: Int = 32768
     val len: ULong = (buflen - 1).toULong()
@@ -25,7 +25,8 @@ val EXE_PATH: String by lazy { getCurrentExecutablePath() }
 
 
 // @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
-// fun getFileFrom
+// fun convertAddr(addr0x: String): String
+// just need to call into popen to invoke addr2line here...
 
 // hmmm. we have pointer addrs but not files/lines.
 // solution: look up our exe file, then run /bin/bash -c 'addr2line -C -e ME.EXE addr'
