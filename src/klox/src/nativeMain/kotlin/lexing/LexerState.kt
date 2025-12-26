@@ -95,8 +95,8 @@ fun computeLexerActionDatas(
       return LDatas.of(LTransition(LexerState.STRING), LUpdateC(curr))
     (curr == '/' && nxt1 == '/') ->
       return LDatas.of(LTransition(LexerState.COMMENT), LUpdateC(curr))
-    (curr == '/' && nxt1 == '/') ->
-      return LDatas.of(LTransition(LexerState.COMMENT), LUpdateC(curr))
+    (curr.isDigit()) ->
+      return LDatas.of(LTransition(LexerState.NUMBER), LUpdateC(curr))
     else ->
       return tryMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN)
         ?.let { LDatas.of(LTransition(LexerState.BIGRAM), it) }

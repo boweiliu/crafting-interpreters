@@ -83,7 +83,7 @@ class LexerStateTest {
       val (datas, resultState) = simulateActions(listOf<Triple<Char?,Char?,Char?>>(
         Triple('1', '2', '3'),
       ))
-      datas.shouldHaveSize(3)
+      datas.shouldHaveSize(2)
       datas.map { it.ty }.shouldBe(listOf("Tr", "Up"))
       resultState.serialize().shouldBe(listOf("NUMBER", "1", "false"))
     }
