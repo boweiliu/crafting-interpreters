@@ -265,6 +265,19 @@ class LexerTest {
   }
 
   @Test
+  fun itLexesMaximally() {
+    val (tokens, errs) = run("andy likes orchids", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(4)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.IDENTIFIER,
+      TokenType.IDENTIFIER,
+      TokenType.IDENTIFIER,
+      TokenType.EOF
+    ))
+  }
+
+  @Test
   fun itLexesErrors() {
     val (tokens, errs) = run("^", "<stdin>")
     errs.shouldHaveSize(1)
