@@ -103,10 +103,13 @@ fun computeLexerActionDatas(
       } else 
         return LDatas.of(LTransition(LexerState.EOF), LToken(TokenType.EOF, ""))
     }
+    old.state == LexerState.BIGRAM -> {
+      return LDatas.of(LTransition(LexerState.DEFAULT))
+    }
     old.state == LexerState.STRING -> {
       when {
         curr == '"' ->
-          return LDatas.of(LUpdateC(curr), LTransition(LexerState.DEFAULT))
+          return LDatas.of(LTransition(LexerState.DEFAULT), LUpdateC(curr))
         else ->
           return LDatas.of(LUpdateC(curr))
       }
@@ -147,7 +150,7 @@ fun computeLexerActionDatas(
       return LDatas.of(LTransition(LexerState.COMMENT), LUpdateC(curr))
     else ->
       return tryMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN)
-        ?.let { LDatas.of(LTransition(LexerState.DEFAULT), it) }
+        ?.let { LDatas.of(LTransition(LexerState.BIGRAM), it) }
       ?: tryMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN)
         ?.let { LDatas.of(LTransition(LexerState.DEFAULT), it) }
       ?: LDatas.of(LError.UNKNOWN_CHAR(old, curr))
@@ -254,19 +257,19 @@ fun computeForTransition(
       LTriple()
     LexerState.COMMENT ->
       LTriple(LToken(TokenType.COMMENT, oldStateData.builder.toString()))
-    LexerState.STRING_START -> {
-      LTriple(null, null, oldStateData)
-    }
     LexerState.STRING -> {
       val lexeme = oldStateData.builder.toString()
 
-      if (toState == LexerState.DEFAULT)
-        LTriple(null, InterpreterErrorType.UNEXPECTED_EOF_STRING.toLError(lexeme))
-      else {
-        val stringVal = LiteralVal.StringVal(lexeme.substring(1, lexeme.length - 1))
-        LTriple(LToken(TokenType.STRING, lexeme, stringVal))
-      }
+      // if (toState == LexerState.DEFAULT)
+      //   LTriple(null, InterpreterErrorType.UNEXPECTED_EOF_STRING.toLError(lexeme))
+      // else {
+      val stringVal = LiteralVal.StringVal(lexeme.substring(1, lexeme.length - 1))
+      LTriple(LToken(TokenType.STRING, lexeme, stringVal))
+      // }
     }
+    // LexerState.STRING_START -> {
+    //   LTriple(null, null, oldStateData)
+    // }
     else ->
       LTriple(null, InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(oldStateData.state))
   }

@@ -66,6 +66,17 @@ class LexerStateTest {
       datas.map { it.ty }.shouldBe(listOf("Up", "Tr"))
       resultState.serialize().shouldBe(listOf("DEFAULT", "", "false"))
     }
+
+    @Test
+    fun itHandlesDoubleEqual() {
+      val (datas, resultState) = simulateActions(listOf<Triple<Char?,Char?,Char?>>(
+        Triple('=', '=', null),
+        Triple('=', null, null),
+      ))
+      datas.shouldHaveSize(3)
+      datas.map { it.ty }.shouldBe(listOf("Tr", "To", "Tr"))
+      resultState.serialize().shouldBe(listOf("DEFAULT", "", "false"))
+    }
   }
 }
 
