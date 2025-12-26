@@ -101,6 +101,8 @@ fun computeLexerActionDatas(
       return LDatas.of(LTransition(LexerState.COMMENT), LUpdateC(curr))
     (curr.isDigit()) ->
       return LDatas.of(LTransition(LexerState.NUMBER), LUpdateC(curr))
+    (curr.isLetter() || curr == '_') ->
+      return LDatas.of(LTransition(LexerState.ALPHA), LUpdateC(curr))
     else ->
       return tryMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN)
         ?.let { LDatas.of(LTransition(LexerState.BIGRAM), it) }
@@ -153,6 +155,13 @@ fun computeForTransition(
             LTriple(LToken(TokenType.NUMBER, lexeme, it))
           } ?: LTriple(null, InterpreterErrorType.UNPARSEABLE_INT_NUMBER.toLError(lexeme))
       }
+    }
+    LexerState.ALPHA -> {
+      val lexeme = oldStateData.builder.toString()
+      Token.LOOKUP_ALPHA_TO_TOKEN.get(lexeme)?.let { type ->
+        LTriple(LToken(type, oldStateData.builder.toString()))
+      } ?: 
+        LTriple(LToken(TokenType.IDENTIFIER, oldStateData.builder.toString()))
     }
     else ->
       LTriple(null, InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(oldStateData.state))

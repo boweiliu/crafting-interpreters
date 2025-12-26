@@ -8,7 +8,7 @@ enum class TokenType {
   COMMENT, // done
 
   COMMA, // done
-  DOT,
+  DOT, // done
   SEMICOLON, // done
 
   PLUS, // done
@@ -16,15 +16,15 @@ enum class TokenType {
   STAR, // done
   SLASH, // done
   PERCENT, // done
-  BANG,
+  BANG, // done
 
-  EQUAL,
-  BANG_EQUAL,
-  EQUAL_EQUAL,
-  LESS_THAN,
-  LESS_THAN_EQUAL,
-  GREATER_THAN,
-  GREATER_THAN_EQUAL,
+  EQUAL, // done
+  BANG_EQUAL, // done
+  EQUAL_EQUAL, // done
+  LESS_THAN, // done
+  LESS_THAN_EQUAL, // done
+  GREATER_THAN, // done
+  GREATER_THAN_EQUAL, // done
   LEFT_PAREN, // done
   RIGHT_PAREN, // done
   LEFT_BRACE, // done
@@ -51,7 +51,7 @@ enum class TokenType {
   THIS,
   SUPER,
 
-  EOF,
+  EOF, // done
 }
 
 sealed interface LiteralVal {
@@ -120,3 +120,7 @@ val Token.Companion.LOOKUP_2CH_TO_TOKEN: Map<Pair<Char, Char>, TokenType>
 // val Token.Companion.LOOKUP_2TOKEN_TO_CH: Map<TokenType, Char>
 //   get() = Token.LOOKUP_1CH_TO_TOKEN.map { (k,v) -> v to k }.toMap()
 
+val Token.Companion.LOOKUP_ALPHA_TO_TOKEN: Map<String, TokenType>
+  get() = mapOf(
+    "" to TokenType.BANG_EQUAL,
+  )

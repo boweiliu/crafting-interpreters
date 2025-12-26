@@ -114,19 +114,19 @@ class LexerTest {
     val sourceString = """
     ( ) { } , ; + - *
 //  1 2 3 4 5 6 7 8 9 10=thisline
-    / % ! = < >
-//  1 2 3 4 5 6   17=thisline
+    . / % ! = < >
+//  1 2 3 4 5 6 7 18=thisline
     != == <= >=    // trailing whitespace
-//  18 19 20 21    22    23=thisline 24=eof
+//  19 20 21 22    23    24=thisline 25=eof
 """
     val (tokens, errs) = run(sourceString, "<stdin>")
     errs.shouldHaveSize(0)
     // 10 per assertion so we can easily spot which is missing
     tokens.map { it.type }.take(10).shouldHaveSize(10)
     tokens.map { it.type }.drop(10).take(10).shouldHaveSize(10)
-    tokens.map { it.type }.drop(20).take(10).shouldHaveSize(4)
+    tokens.map { it.type }.drop(20).take(10).shouldHaveSize(5)
     tokens.map { it.type }[0].shouldBe(TokenType.LEFT_PAREN)
-    tokens.map { it.type }[17].shouldBe(TokenType.BANG_EQUAL)
+    tokens.map { it.type }[18].shouldBe(TokenType.BANG_EQUAL)
   }
 
   @Test
@@ -197,6 +197,17 @@ class LexerTest {
     tokens.map { it.type }.shouldBe(listOf(
       TokenType.STAR,
       TokenType.SLASH,
+      TokenType.EOF
+    ))
+  }
+
+  @Test
+  fun itLexesKeywords() {
+    val (tokens, errs) = run("and", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(2)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.AND,
       TokenType.EOF
     ))
   }
