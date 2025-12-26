@@ -29,3 +29,10 @@ class StacktraceTest {
     getCurrentStacktrace()
   }
 }
+
+class FormatTest {
+  @Test
+  fun itCorrectlyReplaces() {
+    "hello %s i am %s".fformat(1, 2).shouldBe("hello 1 i am 2")
+  }
+}

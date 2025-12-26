@@ -49,7 +49,7 @@ fun getCurrentStacktrace(): String {
   //   // println(listOf<String>(idx, fname, addr, EXE_PATH, rest).joinToString(" | "))
   // }
   // val fullString = e.stackTraceToString()
-  return addrs.drop(3).take(5).joinToString(",") ?: ""
+  return addrs.drop(3).take(5).joinToString(",")
 }
 
 data class InterpreterError(
