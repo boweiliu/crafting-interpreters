@@ -16,9 +16,7 @@ operating from the perspective of the semantic state transitions.
 
 enum class LexerState {
   DEFAULT,
-  STRING_START,
   STRING,
-  SUDDEN_EOF,
   BIGRAM,
   COMMENT,
   NUMBER,
@@ -33,56 +31,6 @@ data class LexerStateData(
   // We keep parsing and just note down the error
   var didError: Boolean = false,
 )
-
-sealed class LDatum(val ty: String) {
-  data class Er(val er: LError): LDatum("Er")
-  data class UpC(val up: LUpdateC): LDatum("Up")
-  data class UpE(val up: LUpdateE): LDatum("Up")
-  data class Tr(val tr: LTransition): LDatum("Tr")
-  data class To(val to: LToken): LDatum("To")
-}
-
-data class LTransition(val st: LexerState)
-data class LUpdateC(val ch: Char)
-data class LUpdateE(val didError: Boolean)
-
-data class LDatas(val stuff: List<LDatum> = listOf()) {
-  companion object {
-    fun of(vararg args: Any?): LDatas {
-      return LDatas(args.mapNotNull { dat ->
-        when (dat) {
-          null -> null
-          is LTransition -> LDatum.Tr(dat)
-          is LUpdateC    -> LDatum.UpC(dat)
-          is LUpdateE    -> LDatum.UpE(dat)
-          is LError      -> LDatum.Er(dat)
-          is LToken      -> LDatum.To(dat)
-          else -> null
-        }
-      }.toList())
-    }
-  }
-}
-
-fun LError.Companion.BAD_STATE(ll: LexerStateData, curr: Char?) =
-  InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(ll.state)
-
-fun LError.Companion.EARLY_EOF(ll: LexerStateData, curr: Char?) =
-  if (ll.state == LexerState.BIGRAM)
-    InterpreterErrorType.UNEXPECTED_EOF_BIGRAM.toLError()
-  else if (ll.state == LexerState.STRING)
-    InterpreterErrorType.UNEXPECTED_EOF_STRING.toLError(ll.builder.toString())
-  else
-    InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(ll.state)
-
-fun LError.Companion.NUMBER_NO_LETTER(ll: LexerStateData, curr: Char?) =
-  InterpreterErrorType.ILLEGAL_CHARACTER_NUMBER.toLError(ll.builder.toString(), curr)
-fun LError.Companion.NUMBER_DOUBLE_DECIMAL(ll: LexerStateData, curr: Char?) =
-  InterpreterErrorType.ILLEGAL_CHARACTER_NUMBER.toLError(ll.builder.toString(), curr)
-fun LError.Companion.NUMBER_FINAL_DECIMAL(ll: LexerStateData, curr: Char?) =
-  InterpreterErrorType.ILLEGAL_FINAL_DECIMAL_NUMBER.toLError(ll.builder.toString(), curr)
-fun LError.Companion.UNKNOWN_CHAR(ll: LexerStateData, curr: Char?) =
-  InterpreterErrorType.UNRECOGNIZED_CHARACTER.toLError(curr)
 
 fun computeLexerActionDatas(
   old: LexerStateData,
@@ -158,94 +106,6 @@ fun computeLexerActionDatas(
   return LDatas()
 }
 
-/* 
-BELOW IS OLD IMPL
-*/
-
-// Compute the state transition when first encountering a character (but before processing it).
-// aka the intermediate state or the pre-char state.
-// Return null == no change.
-fun getIntermediateState(
-  old: LexerState,
-  curr: Char?, nxt1: Char?, nxt2: Char?
-): LexerState? {
-
-  return when(old) {
-    LexerState.DEFAULT ->
-      // we never fast-exit the DEFAULT state. wait for character processing for this
-      null
-    LexerState.BIGRAM,
-    LexerState.STRING ->
-      if (curr == null) LexerState.SUDDEN_EOF
-      else null
-    LexerState.COMMENT ->
-      if (curr == null) LexerState.DEFAULT
-      else if (curr == '\n') LexerState.DEFAULT
-      else null
-    LexerState.NUMBER ->
-      if (curr == null) LexerState.DEFAULT
-      else if (curr.isLetter() || curr == '_') null
-      else if (curr.isDigit()) null
-      else LexerState.DEFAULT
-    else ->
-      null
-  }
-}
-
-// Compute how to handle a character given we've already performed the pre-char state transition.
-// Mutates stateData.
-// This may result in another transition.
-fun computeForChar(
-  stateData: LexerStateData,
-  curr: Char?, nxt1: Char?, nxt2: Char?
-): LQuad<LToken?, LError?, Boolean, LexerState?> {
-  when(stateData.state) {
-    LexerState.SUDDEN_EOF,
-    LexerState.DEFAULT -> {
-      return when {
-        curr == null -> 
-          LQuad(LToken(TokenType.EOF, ""))
-        (curr == ' ' || curr == '\t' || curr == '\n' || curr == '\r') -> 
-          LQuad()
-        (curr == '/' && nxt1 == '/') -> {
-          stateData.builder.append(curr)
-          LQuad(null, null, false, LexerState.COMMENT)
-        }
-        curr == '"' -> {
-          stateData.builder.append(curr)
-          LQuad(null, null, false, LexerState.STRING)
-        }
-        else -> {
-          tryMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN) ?.let {
-            LQuad(it, null, true)
-          } ?:
-          tryMunch1(curr, Token.LOOKUP_1CH_TO_TOKEN) ?.let { 
-            LQuad(it)
-          } ?:
-          LQuad(null, InterpreterErrorType.UNRECOGNIZED_CHARACTER.toLError(curr))
-        }
-      }
-    }
-    // LexerState.STRING_START -> {
-    //   stateData.builder.append(curr)
-    //   return LQuad(null, null, false, LexerState.STRING)
-    // }
-    LexerState.STRING -> {
-      stateData.builder.append(curr)
-      if (curr == '"') {
-        return LQuad(null, null, false, LexerState.DEFAULT)
-      }
-    }
-    LexerState.COMMENT -> {
-      stateData.builder.append(curr)
-    }
-    LexerState.NUMBER -> {
-    }
-    else -> {
-    }
-  }
-  return LQuad()
-}
 
 // Compute how to handle a state transition (usually by dumping the stringbuilder data out).
 // Should not mutate oldStateData.
@@ -268,9 +128,6 @@ fun computeForTransition(
         LTriple(null, InterpreterErrorType.UNPARSEABLE_STRING.toLError(lexeme))
       }
     }
-    // LexerState.STRING_START -> {
-    //   LTriple(null, null, oldStateData)
-    // }
     else ->
       LTriple(null, InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(oldStateData.state))
   }
@@ -292,14 +149,6 @@ fun tryMunch2(curr: Char, nxt: Char?, LOOKUP_MAP: Map<Pair<Char, Char>, TokenTyp
   } ?:
     return null
 }
-
-
-data class LQuad<T1 : LToken?, T2 : LError?, T3 : Boolean, T4 : LexerState?>(
-  val first: T1? = null,
-  val second: T2? = null,
-  val third: Boolean = false,
-  val fourth: T4? = null,
-)
 
 data class LTriple<T1 : LToken?, T2 : LError?, T3: LexerStateData?>(
   val first: T1? = null,
@@ -325,3 +174,54 @@ data class LError(
 fun InterpreterErrorType.toLError(vararg args: Any?): LError {
   return LError(this, this.fformat(*args))
 }
+
+sealed class LDatum(val ty: String) {
+  data class Er(val er: LError): LDatum("Er")
+  data class UpC(val up: LUpdateC): LDatum("Up")
+  data class UpE(val up: LUpdateE): LDatum("Up")
+  data class Tr(val tr: LTransition): LDatum("Tr")
+  data class To(val to: LToken): LDatum("To")
+}
+
+data class LTransition(val st: LexerState)
+data class LUpdateC(val ch: Char)
+data class LUpdateE(val didError: Boolean)
+
+data class LDatas(val stuff: List<LDatum> = listOf()) {
+  companion object {
+    fun of(vararg args: Any?): LDatas {
+      return LDatas(args.mapNotNull { dat ->
+        when (dat) {
+          null -> null
+          is LTransition -> LDatum.Tr(dat)
+          is LUpdateC    -> LDatum.UpC(dat)
+          is LUpdateE    -> LDatum.UpE(dat)
+          is LError      -> LDatum.Er(dat)
+          is LToken      -> LDatum.To(dat)
+          else -> null
+        }
+      }.toList())
+    }
+  }
+}
+
+fun LError.Companion.BAD_STATE(ll: LexerStateData, curr: Char?) =
+  InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(ll.state)
+
+fun LError.Companion.EARLY_EOF(ll: LexerStateData, curr: Char?) =
+  if (ll.state == LexerState.BIGRAM)
+    InterpreterErrorType.UNEXPECTED_EOF_BIGRAM.toLError()
+  else if (ll.state == LexerState.STRING)
+    InterpreterErrorType.UNEXPECTED_EOF_STRING.toLError(ll.builder.toString())
+  else
+    InterpreterErrorType.UNHANDLED_LEXER_STATE.toLError(ll.state)
+
+fun LError.Companion.NUMBER_NO_LETTER(ll: LexerStateData, curr: Char?) =
+  InterpreterErrorType.ILLEGAL_CHARACTER_NUMBER.toLError(ll.builder.toString(), curr)
+fun LError.Companion.NUMBER_DOUBLE_DECIMAL(ll: LexerStateData, curr: Char?) =
+  InterpreterErrorType.ILLEGAL_CHARACTER_NUMBER.toLError(ll.builder.toString(), curr)
+fun LError.Companion.NUMBER_FINAL_DECIMAL(ll: LexerStateData, curr: Char?) =
+  InterpreterErrorType.ILLEGAL_FINAL_DECIMAL_NUMBER.toLError(ll.builder.toString(), curr)
+fun LError.Companion.UNKNOWN_CHAR(ll: LexerStateData, curr: Char?) =
+  InterpreterErrorType.UNRECOGNIZED_CHARACTER.toLError(curr)
+
