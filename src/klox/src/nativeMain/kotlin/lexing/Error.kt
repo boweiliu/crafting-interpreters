@@ -35,15 +35,21 @@ val EXE_PATH: String by lazy { getCurrentExecutablePath() }
 fun getCurrentStacktrace(): String {
   val e = Throwable()
   val structured: Array<String> = e.getStackTrace()
-  structured.take(3).forEach { it -> 
-    // println(it)
+  val addrs: List<String> = structured.map { it -> 
     val entries: List<String> = it.split("\\s+".toRegex())
     val (idx, fname, addr) = entries.take(3)
     val rest = entries.drop(3).joinToString(" ")
-    // println(listOf<String>(idx, fname, addr, EXE_PATH, rest).joinToString(" | "))
-  }
-  val fullString = e.stackTraceToString()
-  return ""
+    addr
+  }.toList()
+  // structured.take(3).forEach { it -> 
+  //   // println(it)
+  //   val entries: List<String> = it.split("\\s+".toRegex())
+  //   val (idx, fname, addr) = entries.take(3)
+  //   val rest = entries.drop(3).joinToString(" ")
+  //   // println(listOf<String>(idx, fname, addr, EXE_PATH, rest).joinToString(" | "))
+  // }
+  // val fullString = e.stackTraceToString()
+  return addrs.drop(3).take(5).joinToString(",") ?: ""
 }
 
 data class InterpreterError(

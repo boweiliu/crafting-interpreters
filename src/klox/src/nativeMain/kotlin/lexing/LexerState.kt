@@ -79,11 +79,12 @@ fun computeLexerActionDatas(
       // (curr == '.' && nxt1?.isDigit() == true && !old.builder.contains(".")) -> 
       //   return LDatas.of(LUpdateC(curr))
       (curr == '.') -> {
-        return LDatas.of(
-          if (old.builder.contains(".")) LError.NUMBER_DOUBLE_DECIMAL(old, curr) else null,
-          if (nxt1?.isDigit() == true) null else LError.NUMBER_FINAL_DECIMAL(old, curr),
-          LUpdateC(curr),
-        )
+        if (old.builder.contains(".")) 
+          return LDatas.of(LError.NUMBER_DOUBLE_DECIMAL(old, curr), LUpdateC(curr), LUpdateE(true))
+        else if (nxt1?.isDigit() != true) 
+          return LDatas.of(LError.NUMBER_FINAL_DECIMAL(old, curr), LUpdateC(curr), LUpdateE(true))
+        else
+          return LDatas.of(LUpdateC(curr))
       }
     }
   }

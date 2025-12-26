@@ -140,7 +140,7 @@ class LexerTest {
   fun itLexesNumbers() {
     val (tokens, errs) = run("123 4.5 -6*7// hello", "<stdin>")
     errs.shouldHaveSize(0)
-    tokens.shouldHaveSize(5)
+    tokens.shouldHaveSize(8)
     tokens.map { it.type }.shouldBe(listOf(
       TokenType.NUMBER,
       TokenType.NUMBER,
