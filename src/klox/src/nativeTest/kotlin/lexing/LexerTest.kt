@@ -191,11 +191,12 @@ class LexerTest {
 
   @Test
   fun itErrorsInvalidNumbers() {
-    val (tokens, errs) = run("11.x * 2.2f 3_3 4d4 5.* 6.", "<stdin>")
+    val (tokens, errs) = run("11.x * 2.2f 3_3 4d4 5./ 6.", "<stdin>")
     errs.shouldHaveSize(6)
-    tokens.shouldHaveSize(2)
+    tokens.shouldHaveSize(3)
     tokens.map { it.type }.shouldBe(listOf(
       TokenType.STAR,
+      TokenType.SLASH,
       TokenType.EOF
     ))
   }

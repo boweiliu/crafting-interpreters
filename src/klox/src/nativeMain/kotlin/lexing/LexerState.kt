@@ -31,6 +31,9 @@ data class LexerStateData(
   var didError: Boolean = false,
 )
 
+fun Char.isDigitLetterUnder(): Boolean = 
+  (this.isLetter() || this.isDigit() || this == '_')
+
 fun computeLexerActionDatas(
   old: LexerStateData,
   curr: Char?, nxt1: Char?, nxt2: Char?
@@ -81,7 +84,7 @@ fun computeLexerActionDatas(
       (curr == '.') -> {
         if (old.builder.contains(".")) 
           return LDatas.of(LError.NUMBER_DOUBLE_DECIMAL(old, curr), LUpdateC(curr), LUpdateE(true))
-        else if (nxt1?.isDigit() != true) 
+        else if (nxt1?.isDigitLetterUnder() != true) 
           return LDatas.of(LError.NUMBER_FINAL_DECIMAL(old, curr), LUpdateC(curr), LUpdateE(true))
         else
           return LDatas.of(LUpdateC(curr))
