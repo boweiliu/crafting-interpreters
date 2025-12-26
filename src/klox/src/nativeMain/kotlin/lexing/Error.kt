@@ -9,6 +9,8 @@ import kotlinx.cinterop.*
 @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 fun getCurrentExecutablePath(): String {
   // THIS WORKS!!
+  // https://kotlinlang.org/docs/mapping-primitive-data-types-from-c.html#inspect-generated-kotlin-apis-for-a-c-library
+  // http://kofa.mmto.arizona.edu/android/kotlin/alloc.html
   return memScoped {
     val buflen: Int = 32768
     val len: ULong = (buflen - 1).toULong()
@@ -27,6 +29,8 @@ val EXE_PATH: String by lazy { getCurrentExecutablePath() }
 // @OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 // fun convertAddr(addr0x: String): String
 // just need to call into popen to invoke addr2line here...
+// https://stackoverflow.com/questions/57123836/kotlin-native-execute-command-and-get-the-output
+// note that shell invoking addr2line is quite slow sometimes, not sure why
 
 // hmmm. we have pointer addrs but not files/lines.
 // solution: look up our exe file, then run /bin/bash -c 'addr2line -C -e ME.EXE addr'
