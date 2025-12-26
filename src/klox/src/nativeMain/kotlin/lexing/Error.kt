@@ -40,7 +40,7 @@ fun getCurrentStacktrace(): String {
     val entries: List<String> = it.split("\\s+".toRegex())
     val (idx, fname, addr) = entries.take(3)
     val rest = entries.drop(3).joinToString(" ")
-    println(listOf<String>(idx, fname, addr, EXE_PATH, rest).joinToString(" | "))
+    // println(listOf<String>(idx, fname, addr, EXE_PATH, rest).joinToString(" | "))
   }
   val fullString = e.stackTraceToString()
   return ""
@@ -52,7 +52,7 @@ data class InterpreterError(
   val message: String,
 ) {
   constructor(errType: InterpreterErrorType, locationLineNo: Int, locationFileName: String, message: String) :
-    this(locationLineNo, locationFileName, "[${errType.sev}${errType.code}]: " + message + "\n\n" + getCurrentStacktrace())
+    this(locationLineNo, locationFileName, "[${errType.sev}${errType.code}]: " + message + " @ " + getCurrentStacktrace())
 
   companion object {}
 }
