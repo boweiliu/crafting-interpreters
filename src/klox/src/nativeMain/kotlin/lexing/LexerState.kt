@@ -94,37 +94,37 @@ fun computeLexerActionDatas(
       } else 
         return LDatas.of(LTransition(LexerState.EOF), LToken(TokenType.EOF, ""))
     }
+    old.state == LexerState.STRING -> {
+      when {
+        curr == '"' ->
+          return LDatas.of(LUpdateC(curr), LTransition(LexerState.DEFAULT))
+        else ->
+          return LDatas.of(LUpdateC(curr))
+      }
+    }
 
 
   }
   return LDatas()
 }
 /*
-    old.state == LexerState.STRING -> {
-      when {
-        curr == '"' ->
-          return LDatas(LUpdate(curr), LTransition(LexerState.DEFAULT))
-        else ->
-          return LDatas(LUpdate(curr))
-      }
-    }
     old.state == LexerState.COMMENT -> {
       when {
         curr == '\n' ->
-          return LDatas(LTransition(LexerState.DEFAULT))
+          return LDatas.of(LTransition(LexerState.DEFAULT))
         else ->
-          return LDatas(LUpdate(curr))
+          return LDatas.of(LUpdate(curr))
       }
     }
   }
   if (old.state == LexerState.NUMBER) {
     when {
       (curr?.isLetter() == true || curr == '_') ->
-        return LDatas(LUpdate(curr), LUpdateErr(), LError.NUMBER_NO_LETTER(old, curr))
+        return LDatas.of(LUpdate(curr), LUpdateErr(), LError.NUMBER_NO_LETTER(old, curr))
       (curr?.isDigit() == true) ->
-        return LDatas(LUpdate(curr))
+        return LDatas.of(LUpdate(curr))
       (curr == '.' && nxt1?.isDigit() == true && !old.builder.contains(".")) -> 
-        return LDatas(LUpdate(curr))
+        return LDatas.of(LUpdate(curr))
       (curr == '.') -> {
         return LDatas.of(
           if (old.builder.contains(".")) LError.NUMBER_DOUBLE_DECIMAL(old, curr) else null,
@@ -136,16 +136,16 @@ fun computeLexerActionDatas(
   }
   when {
     (curr == ' ' || curr == '\t' || curr == '\n' || curr == '\r') -> 
-      return LDatas(LTransition(LexerState.DEFAULT))
+      return LDatas.of(LTransition(LexerState.DEFAULT))
     (curr == '"') ->
-      return LDatas(LTransition(LexerState.STRING), LUpdate(curr))
+      return LDatas.of(LTransition(LexerState.STRING), LUpdate(curr))
     (curr == '/' && nxt1 == '/') ->
-      return LDatas(LTransition(LexerState.COMMENT), LUpdate(curr, null))
+      return LDatas.of(LTransition(LexerState.COMMENT), LUpdate(curr, null))
     else ->
       return tryMunch2(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN)
-        ?.let { return LDatas(LTransition(LexerState.DEFAULT), it) }
+        ?.let { return LDatas.of(LTransition(LexerState.DEFAULT), it) }
       ?: tryMunch1(curr, nxt1, Token.LOOKUP_2CH_TO_TOKEN)
-        ?.let { return LDatas(LTransition(LexerState.DEFAULT), it) }
+        ?.let { return LDatas.of(LTransition(LexerState.DEFAULT), it) }
   }
 }
 */

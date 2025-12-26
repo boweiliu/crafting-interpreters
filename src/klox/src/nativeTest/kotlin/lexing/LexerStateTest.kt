@@ -56,6 +56,16 @@ class LexerStateTest {
       datas.map { it.ty }.shouldBe(listOf("Tr", "To"))
       resultState.serialize().shouldBe(listOf("EOF", "", "false"))
     }
+
+    @Test
+    fun itShouldHandleConcludingStrings() {
+      val (datas, resultState) = simulateActions(listOf<Triple<Char?,Char?,Char?>>(
+        Triple('"', null, null),
+      ), LexerStateData(LexerState.STRING, StringBuilder("\""), false))
+      datas.shouldHaveSize(2)
+      datas.map { it.ty }.shouldBe(listOf("Up", "Tr"))
+      resultState.serialize().shouldBe(listOf("DEFAULT", "", "false"))
+    }
   }
 }
 
