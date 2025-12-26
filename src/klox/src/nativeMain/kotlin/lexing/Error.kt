@@ -16,6 +16,7 @@ enum class InterpreterErrorType(val sev: String, val code: String) {
   UNRECOGNIZED_CHARACTER        ("E", "010"),
   UNEXPECTED_EOF_BIGRAM         ("E", "020"),
   UNEXPECTED_EOF_STRING         ("E", "021"),
+  UNPARSEABLE_STRING            ("E", "025"),
   ILLEGAL_CHARACTER_NUMBER      ("E", "030"),
   ILLEGAL_FINAL_DECIMAL_NUMBER  ("E", "031"),
   UNPARSEABLE_DOUBLE_NUMBER     ("E", "032"),
@@ -45,6 +46,8 @@ val InterpreterErrorType.Companion.MESSAGE_TEMPLATE_MAP: Map<InterpreterErrorTyp
       "Could not parse float '%s', ignoring",
     InterpreterErrorType.UNPARSEABLE_INT_NUMBER to
       "Could not parse int/float '%s', ignoring",
+    InterpreterErrorType.UNPARSEABLE_STRING to
+      "Could not parse string '%s', ignoring",
     InterpreterErrorType.PARSED_INT_AS_DOUBLE to
       "Warning: parsed int '%s' as double, possible precision loss",
   )

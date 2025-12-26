@@ -253,6 +253,7 @@ fun computeForTransition(
   oldStateData: LexerStateData, toState: LexerState, cause: Char?
 ): LTriple<LToken?, LError?, LexerStateData?> {
   return when (oldStateData.state) {
+    LexerState.BIGRAM,
     LexerState.DEFAULT -> 
       LTriple()
     LexerState.COMMENT ->
@@ -260,12 +261,12 @@ fun computeForTransition(
     LexerState.STRING -> {
       val lexeme = oldStateData.builder.toString()
 
-      // if (toState == LexerState.DEFAULT)
-      //   LTriple(null, InterpreterErrorType.UNEXPECTED_EOF_STRING.toLError(lexeme))
-      // else {
-      val stringVal = LiteralVal.StringVal(lexeme.substring(1, lexeme.length - 1))
-      LTriple(LToken(TokenType.STRING, lexeme, stringVal))
-      // }
+      if (lexeme.length >= 2 && lexeme[0] == '"' && lexeme[lexeme.length - 1] == '"') {
+        val stringVal = LiteralVal.StringVal(lexeme.substring(1, lexeme.length - 1))
+        LTriple(LToken(TokenType.STRING, lexeme, stringVal))
+      } else {
+        LTriple(null, InterpreterErrorType.UNPARSEABLE_STRING.toLError(lexeme))
+      }
     }
     // LexerState.STRING_START -> {
     //   LTriple(null, null, oldStateData)
