@@ -91,6 +91,12 @@ fun computeLexerActionDatas(
       }
     }
   }
+  if (old.state == LexerState.ALPHA) {
+    when {
+      curr.isDigitLetterUnder() ->
+        return LDatas.of(LUpdateC(curr))
+    }
+  }
 
   when {
     (curr == ' ' || curr == '\t' || curr == '\n' || curr == '\r') -> 
@@ -158,7 +164,7 @@ fun computeForTransition(
     }
     LexerState.ALPHA -> {
       val lexeme = oldStateData.builder.toString()
-      Token.LOOKUP_ALPHA_TO_TOKEN.get(lexeme)?.let { type ->
+      Token.LOOKUP_ALPHA_TO_TOKEN.get(lexeme.uppercase())?.let { type ->
         LTriple(LToken(type, oldStateData.builder.toString()))
       } ?: 
         LTriple(LToken(TokenType.IDENTIFIER, oldStateData.builder.toString()))

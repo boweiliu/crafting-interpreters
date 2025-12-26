@@ -110,6 +110,29 @@ class LexerTest {
   }
 
   @Test
+  fun itLexesWhitespace() {
+    val (tokens, errs) = run("  \t    \n    ", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(1)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.EOF
+    ))
+  }
+
+  @Test
+  fun itLexesBackToBackStrings() {
+    val (tokens, errs) = run(" \"a\"\"b\"     \"c\"  ", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(4)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.STRING,
+      TokenType.STRING,
+      TokenType.STRING,
+      TokenType.EOF,
+    ))
+  }
+
+  @Test
   fun itLexesVariousSymbols() {
     val sourceString = """
     ( ) { } , ; + - *
@@ -202,12 +225,41 @@ class LexerTest {
   }
 
   @Test
-  fun itLexesKeywords() {
+  fun itLexesAKeyword() {
     val (tokens, errs) = run("and", "<stdin>")
     errs.shouldHaveSize(0)
     tokens.shouldHaveSize(2)
     tokens.map { it.type }.shouldBe(listOf(
       TokenType.AND,
+      TokenType.EOF
+    ))
+  }
+
+  @Test
+  fun itLexesCaseInsensitiveKeyword() {
+    val (tokens, errs) = run("and OR nOt", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(4)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.AND,
+      TokenType.OR,
+      TokenType.NOT,
+      TokenType.EOF
+    ))
+  }
+
+  @Test
+  fun itLexesVariables() {
+    val (tokens, errs) = run("x _.y_/z2", "<stdin>")
+    errs.shouldHaveSize(0)
+    tokens.shouldHaveSize(7)
+    tokens.map { it.type }.shouldBe(listOf(
+      TokenType.IDENTIFIER,
+      TokenType.IDENTIFIER,
+      TokenType.DOT,
+      TokenType.IDENTIFIER,
+      TokenType.SLASH,
+      TokenType.IDENTIFIER,
       TokenType.EOF
     ))
   }
