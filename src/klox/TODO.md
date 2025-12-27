@@ -9,3 +9,11 @@
 4. Finish up that test to make sure lexing is seq2seq (important for feeding in a sequence to the parser)
 5. Newlines (and later, other whitespace tokens) are sure to be useful - lets emit them during lexing in case we want to do something useful during parsing (eg syntax error recovery)
 6. Think about how extensible the lexer is
+
+## PARSER
+
+1. separate it out into a grouper and whatever else
+2. grouper should convert the token stream into a forth-like stack, with GROUPN tokens inserted that indicate the sentence type too (XOX, OXO, etc.)
+3. Remember to write your code functionally! functional core imperative shell means easy testing. also means that it needs to "emit" scratch modifications so they can be applied and emitted
+4. If you foresee trouble writing in coroutine style in C or zig, zoom to self-hosting
+5. In order to self-host asap, we'll want a way to drop down to C syntax... unclear how tho
