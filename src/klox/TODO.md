@@ -1,5 +1,10 @@
 1. refactor lineNo + fileName = location
 
+## KOTLIN
+
+1. use template strings instead of custom string fformat
+2. find the gradle options to remove all compiler optimizations, which should help with debug runstacks
+3. find a popen library and import it
 
 ## LEXER
 
