@@ -26,7 +26,7 @@ fun testRunLexerJustRuns() {
 
 @Test
 fun testRunLexerRunsLazily() {
-  val (tokenSeq, errorsSoFar) = runLexer("1 + 2\"", "<stdin>")
+  val (tokenSeq, errorsSoFar) = runLexer("1 + 2\"")
   errorsSoFar.shouldHaveSize(0)
   tokenSeq.toList()
   errorsSoFar.shouldHaveSize(2)
