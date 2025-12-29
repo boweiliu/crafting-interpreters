@@ -31,9 +31,6 @@ data class LexerStateData(
   var didError: Boolean = false,
 )
 
-fun Char.isDigitLetterUnder(): Boolean = 
-  (this.isLetter() || this.isDigit() || this == '_')
-
 fun computeLexerActionDatas(
   old: LexerStateData,
   curr: Char?, nxt1: Char?, nxt2: Char?
@@ -265,4 +262,8 @@ fun LError.Companion.NUMBER_FINAL_DECIMAL(ll: LexerStateData, curr: Char?) =
   InterpreterErrorType.ILLEGAL_FINAL_DECIMAL_NUMBER.toLError(ll.builder.toString() + curr.toString(), curr)
 fun LError.Companion.UNKNOWN_CHAR(ll: LexerStateData, curr: Char?) =
   InterpreterErrorType.UNRECOGNIZED_CHARACTER.toLError(curr)
+
+
+fun Char.isDigitLetterUnder(): Boolean = 
+  (this.isLetter() || this.isDigit() || this == '_')
 

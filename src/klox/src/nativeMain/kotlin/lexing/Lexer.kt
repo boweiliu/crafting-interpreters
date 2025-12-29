@@ -236,10 +236,10 @@ suspend fun LexScope.tryDoMunch2(
 
 // Helper function to iterate through a array and peek ahead at it.
 // Always returns a final 3xnull.
-fun <T> Iterable<T>.peekAhead3(): Sequence<Triple<T?, T?, T?>> {
+fun <T> Sequence<T>.peekAhead3(): Sequence<Triple<T?, T?, T?>> {
   var prev2: T? = null
   var prev: T? = null
-  val ls: Iterable<T> = this
+  val ls = this
 
   return sequence<Triple<T?, T?, T?>> {
     ls.forEach { it -> 
@@ -258,6 +258,8 @@ fun <T> Iterable<T>.peekAhead3(): Sequence<Triple<T?, T?, T?>> {
      yield(Triple(null,null,null))
   }
 }
+
+fun <T> Iterable<T>.peekAhead3(): Sequence<Triple<T?, T?, T?>> = this.asSequence().peekAhead3()
 
 sealed interface EmittableLexingBlob {
   data class Err(val e: InterpreterError): EmittableLexingBlob
