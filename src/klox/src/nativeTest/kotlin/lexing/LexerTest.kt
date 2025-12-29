@@ -298,19 +298,19 @@ class PeekAheadTest {
 
   @Test
   fun itJustRunsOnEmpty() {
-    val result = listOf<String>().peekAhead3()
+    val result = listOf<String>().peekAhead3().toList()
     result.shouldBe(listOf(Triple(null, null, null)))
   }
 
   @Test
   fun itJustRunsOnOne() {
-    val result = listOf<String>("A").peekAhead3()
+    val result = listOf<String>("A").peekAhead3().toList()
     result.shouldBe(listOf(Triple("A", null, null), Triple(null, null, null)))
   }
 
   @Test
   fun itJustRunsOnMany() {
-    val result = "ABCD".toCharArray().toList().peekAhead3()
+    val result = "ABCD".toCharArray().toList().peekAhead3().toList()
     result.shouldBe(listOf(
       Triple('A', 'B', 'C'),
       Triple('B', 'C', 'D'),
