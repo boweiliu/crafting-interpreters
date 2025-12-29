@@ -9,6 +9,13 @@ fun runAll(ss: String, sourceFname: String = "<unnamed>"): Pair<Unit, List<Inter
   return Pair(Unit, errsAcc.toList())
 }
 
+/*
+fun runLexer(
+  ss: String, sourceFname: String = "<unnamed>",
+  errsAcc: MutableList<in InterpreterError> = mutableListOf()
+): Pair<Sequence<Token>, List<InterpreterError>> {
+*/
+
 fun runCongealer(
   inputTokens: Sequence<Token>,
   sourceFname: String = "<unnamed>",
