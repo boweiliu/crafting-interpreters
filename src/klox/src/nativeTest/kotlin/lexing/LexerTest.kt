@@ -5,6 +5,11 @@ import io.kotest.matchers.*
 import io.kotest.matchers.collections.*
 
 
+fun run(ss: String, sourceFname: String): Pair<List<Token>, List<InterpreterError>> {
+  val (ts, es) = runLexer(ss, sourceFname)
+  return Pair(ts.toList<Token>(), es)
+}
+
 class LexerTest {
   @Test
   fun itJustRuns() {

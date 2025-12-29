@@ -2,6 +2,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import io.kotest.matchers.*
 import io.kotest.matchers.collections.*
+import lexing.*
 
 @Test
 fun test1() {
