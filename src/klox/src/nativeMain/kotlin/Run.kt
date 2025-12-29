@@ -1,4 +1,5 @@
 import lexing.*
+import congealing.*
 
 fun runAll(ss: String, sourceFname: String = "<unnamed>"): Pair<Unit, List<InterpreterError>> {
   val errsAcc: MutableList<InterpreterError> = mutableListOf()
@@ -14,7 +15,6 @@ fun runLexer(
   ss: String, sourceFname: String = "<unnamed>",
   errsAcc: MutableList<in InterpreterError> = mutableListOf()
 ): Pair<Sequence<Token>, List<InterpreterError>> {
-*/
 
 fun runCongealer(
   inputTokens: Sequence<Token>,
@@ -24,3 +24,4 @@ fun runCongealer(
   return Pair(inputTokens, errsAcc.toList<InterpreterError>())
 }
 
+*/

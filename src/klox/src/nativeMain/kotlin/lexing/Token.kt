@@ -1,5 +1,20 @@
 package lexing
 
+data class Token(
+  val type: TokenType,
+
+  // the full text of it
+  val lexeme: String,
+
+  // the semantic value, if literal
+  val literal: LiteralVal?,
+
+  val lineNo: Int,
+  val fileName: String,
+) {
+  companion object {}
+}
+
 enum class TokenType {
   // literals
   STRING, // done
@@ -65,21 +80,6 @@ sealed interface LiteralVal {
       is DoubleVal -> this.v
     }
   }
-}
-
-data class Token(
-  val type: TokenType,
-
-  // the full text of it
-  val lexeme: String,
-
-  // the semantic value, if literal
-  val literal: LiteralVal?,
-
-  val lineNo: Int,
-  val fileName: String,
-) {
-  companion object {}
 }
 
 val Token.Companion.LOOKUP_1CH_TO_TOKEN: Map<Char, TokenType>
