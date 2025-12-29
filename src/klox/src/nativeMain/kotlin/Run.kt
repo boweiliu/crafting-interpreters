@@ -5,6 +5,7 @@ fun runAll(ss: String, sourceFname: String = "<unnamed>"): Pair<Unit, List<Inter
   val (tokenStream, ) = runLexer(ss, sourceFname, errsAcc)
   val (congealedStream, ) = runCongealer(tokenStream, sourceFname, errsAcc)
 
+  congealedStream.toList()
   return Pair(Unit, errsAcc.toList())
 }
 
@@ -15,8 +16,6 @@ fun runCongealer(
 ): Pair<Sequence<Token>, List<InterpreterError>> {
   return Pair(inputTokens, errsAcc.toList<InterpreterError>())
 }
-
-  
 
 fun runLexer(
   ss: String, sourceFname: String = "<unnamed>",

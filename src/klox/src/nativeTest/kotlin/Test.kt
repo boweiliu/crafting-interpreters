@@ -32,4 +32,18 @@ fun testRunLexerRunsLazily() {
   errorsSoFar.shouldHaveSize(2)
 }
 
+@Test
+fun testRunLexerEmitsTokens() {
+  val (tokenSeq, errorsSoFar) = runLexer("1 + 2")
+  errorsSoFar.shouldHaveSize(0)
+  tokenSeq.toList().shouldHaveSize(4)
+}
+
+
+
+@Test
+fun testRunAllJustRuns() {
+  val (_, errorsSoFar) = runAll("1 + 2")
+  errorsSoFar.shouldHaveSize(0)
+}
 
