@@ -1,0 +1,45 @@
+package sequence
+
+import kotlin.coroutines.*
+import kotlin.experimental.*
+
+
+/**
+ * Example of a sequence that receives yields().
+ */
+
+@RestrictsSuspension
+interface SequenceScope<in T> {
+    suspend fun yield1(value: T)
+}
+
+// @ExperimentalTypeInference
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+fun <T> mySequence(
+  @BuilderInference block: suspend SequenceScope<T>.() -> Unit
+): Sequence<T> = Sequence {
+    SequenceCoroutine<T>().apply {
+        nextStep = block.createCoroutine(receiver = this, completion = this)
+    }
+}
+
+private class SequenceCoroutine<T>: AbstractIterator<T>(), SequenceScope<T>, Continuation<Unit> {
+    lateinit var nextStep: Continuation<Unit>
+
+    // AbstractIterator implementation
+    override fun computeNext() { nextStep.resume(Unit) }
+
+    // Completion continuation implementation
+    override val context: CoroutineContext get() = EmptyCoroutineContext
+
+    override fun resumeWith(result: Result<Unit>) {
+        result.getOrThrow() // bail out on error
+        done()
+    }
+
+    // Generator implementation
+    override suspend fun yield1(value: T) {
+        setNext(value)
+        return suspendCoroutine { cont -> nextStep = cont }
+    }
+}
