@@ -68,7 +68,10 @@ duoNext() is sort of like "go start doing work, synchronously, here's a token if
   give me back the result when you're done"
 on the coroutine side, our state machine calls
   "{ firstToken -> ... nextToken = [await] duoYield(firstResult) ... " or
-  "{ ..init.. token = [await] coYield() ; .... ; [await] yield(result) && token = [await] coYield()
+  "{ ..init.. token = [buff'd] coYield() ; ... ; [await] yield(result) && token = [buff'd] coYield()
+
+hmmm... how to debug the coroutine state? would be nice if both the program state
+ and any locals were inspectable and easily testable...
 
 parserSequence = duoSequence {
   tokenStream.forEach { token ->
