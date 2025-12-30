@@ -11,19 +11,21 @@ fun my() {
   val acc: MutableList<Int> = mutableListOf(-1)
   val s = mySequence<Int> { 
     for (i in 1..3) {
-      acc.add(0)
+      acc.add(i * 10)
       yield1(i)
     }
   }
-  s.iterator().hasNext().shouldBe(true)
+  val it = s.iterator()
   acc.toList().shouldBe(listOf(-1))
-  s.iterator().next()
-  acc.toList().shouldBe(listOf(-1,0))
-  s.iterator().next()
-  acc.toList().shouldBe(listOf(-1,0,0))
-  s.iterator().next()
-  acc.toList().shouldBe(listOf(-1,0,0,0))
-  s.iterator().hasNext().shouldBe(true)
+  it.hasNext()
+  acc.toList().shouldBe(listOf(-1,10))
+  it.next()
+  acc.toList().shouldBe(listOf(-1,10))
+  it.next()
+  acc.toList().shouldBe(listOf(-1,10,20))
+  it.next()
+  acc.toList().shouldBe(listOf(-1,10,20,30))
+  it.hasNext().shouldBe(false)
 }
 
 /*
@@ -39,15 +41,17 @@ fun obtain() {
     }
   }
 
-  s.iterator().hasNext().shouldBe(true)
+  val it = s.iterator()
   acc.toList().shouldBe(listOf(-1))
-  s.iterator().next()
+  it.hasNext()
   acc.toList().shouldBe(listOf(-1,10))
-  s.iterator().next()
+  it.next()
+  acc.toList().shouldBe(listOf(-1,10))
+  it.next()
   acc.toList().shouldBe(listOf(-1,10,20))
-  s.iterator().next()
+  it.next()
   acc.toList().shouldBe(listOf(-1,10,20,30))
-  s.iterator().hasNext().shouldBe(false)
+  it.hasNext().shouldBe(false)
 }
 
 */
