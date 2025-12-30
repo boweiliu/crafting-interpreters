@@ -63,7 +63,7 @@ on the interface (nocoro) side, clients call "val x = iterator.next()" -> get it
 next() is sort of like "go start doing work and give it back synchronously when you're done"
 
 what we want: a DuoSequence which exposes a message-like interface.
-on th interface side, we want to do "stuff = machine.duoNext()"
+on th interface side, we want to do "stuff = machine.duoNext(token)"
 duoNext() is sort of like "go start doing work, synchronously, here's a token if you need it,
   give me back the result when you're done"
 on the coroutine side, our state machine calls
@@ -72,8 +72,14 @@ on the coroutine side, our state machine calls
 
 hmmm... how to debug the coroutine state? would be nice if both the program state
  and any locals were inspectable and easily testable...
+  basically: set up the locals and the current line of the program (and any context closed over),
+  AND the locals and line number of the entire stack depth, so we can compare that in the test...
+(it sounds like this is too hard for kotlin right now, but worth asking/considering later)
+  
 
-parserSequence = duoSequence {
+parserSequence = sequence {
+  val stateMachine = duoSequence { behaviorFn }
+
   tokenStream.forEach { token ->
     val updates = stateMachine.send(token) // send is like yieldable
 
