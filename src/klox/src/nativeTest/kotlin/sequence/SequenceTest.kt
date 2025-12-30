@@ -28,9 +28,9 @@ fun my() {
   it.hasNext().shouldBe(false)
 }
 
-/*
+@Test
 fun obtain() {
-  val source: List<Int> = listOf(1,2,3,4,5).asSequence()
+  val source: Sequence<Int> = listOf(1,2,3,4,5).asSequence()
   val acc: MutableList<Int> = mutableListOf(-1)
 
   val s = myEmitter<Int>(source) {
@@ -38,7 +38,7 @@ fun obtain() {
       val it = obtain2()
       if (it >= 4) break
       acc.add(it * 10)
-      yield1(i)
+      yield1(it)
     }
   }
 
@@ -55,16 +55,29 @@ fun obtain() {
   it.hasNext().shouldBe(false)
 }
 
-*/
-
 /*
 
-parserSequence = sequence {
+Sequences expose a iterable interface.
+on the coroutine side, our state machine calls "[await] yield(val)" -> paused, holding val
+on the interface (nocoro) side, clients call "val x = iterator.next()" -> get it
+next() is sort of like "go start doing work and give it back synchronously when you're done"
+
+what we want: a DuoSequence which exposes a message-like interface.
+on th interface side, we want to do "stuff = machine.duoNext()"
+duoNext() is sort of like "go start doing work, synchronously, here's a token if you need it,
+  give me back the result when you're done"
+on the coroutine side, our state machine calls
+  "{ firstToken -> ... nextToken = [await] duoYield(firstResult) ... " or
+  "{ ..init.. token = [await] coYield() ; .... ; [await] yield(result) && token = [await] coYield()
+
+parserSequence = duoSequence {
   tokenStream.forEach { token ->
-    val updates = stateMachine.send(token)
+    val updates = stateMachine.send(token) // send is like yieldable
 
     updates.forEach { when(it) is parserBlob -> yield(it) }
   }
 }
+
+parserSequence.groupByLines().forEach { line -> execute(line) }
 */
 

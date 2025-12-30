@@ -42,26 +42,36 @@ private class SequenceCoroutine<T>: AbstractIterator<T>(), SequenceScope<T>, Con
     }
 }
 
-
 @OptIn(kotlin.experimental.ExperimentalTypeInference::class)
 fun <T> myEmitter(
   data: Sequence<Int>,
   @BuilderInference block: suspend SequenceAndEmitterScope<T>.() -> Unit
-): Sequence<T> = 
+): DuoIterator<Int, T> = 
     SequenceAndEmitterCoroutine<T>(data.iterator()).apply {
         nextStep = block.createCoroutine(receiver = this, completion = this)
-    }.asSequence()
+    }
 
+interface DuoIterator<A, T> {
+  fun canSend(): Boolean
+  fun send(a: A): T
+  fun iterator(): Iterator<T>
+}
 
 
 @RestrictsSuspension
 interface SequenceAndEmitterScope<in T> {
     suspend fun yield1(value: T)
-    suspend fun obtain(): Int
+    suspend fun obtain2(): Int
 }
 
-private class SequenceAndEmitterCoroutine<T>(val myData: Iterator<Int>): AbstractIterator<T>(), SequenceAndEmitterScope<T>, Continuation<Unit> {
+private class SequenceAndEmitterCoroutine<T>(val myData: Iterator<Int>): AbstractIterator<T>(), SequenceAndEmitterScope<T>, Continuation<Unit>, DuoIterator<Int, T> {
     lateinit var nextStep: Continuation<Unit>
+
+    override fun iterator() = this
+    override fun canSend() = hasNext()
+    override fun send(a: Int): T {
+      TODO()
+    }
 
     override fun computeNext() {
       nextStep.resume(Unit)
@@ -81,7 +91,7 @@ private class SequenceAndEmitterCoroutine<T>(val myData: Iterator<Int>): Abstrac
     }
 
     // Generator implementation
-    override suspend fun obtain(): Int {
+    override suspend fun obtain2(): Int {
         return myData.next()
     }
 }
