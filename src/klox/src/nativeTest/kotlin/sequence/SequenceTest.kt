@@ -69,6 +69,22 @@ duoNext() is sort of like "go start doing work, synchronously, here's a token if
 on the coroutine side, our state machine calls
   "{ firstToken -> ... nextToken = [await] duoYield(firstResult) ... " or
   "{ ..init.. token = [buff'd] coYield() ; ... ; [await] yield(result) && token = [buff'd] coYield()
+  "{ (token, retSlot) = checkout() ; ... ; (nextToken, nextRetSlot) = (token, retSlot).yield(value) ; nextGuy = coYield()
+ ""
+    yieldStep({
+      yield: prev,
+      obtain: { val nextToken = kont() }
+    })
+    yield(prev) && val nextToken = coYield()
+    lateinit var nextToken
+    yieldDuo(prev, coYieldInto = { nextToken = it })
+
+
+what I really want to write is something like
+
+    return(stuffSoFar) jmpto HERE
+    HERE{}: (val nextToken, ) cofn
+    
 
 hmmm... how to debug the coroutine state? would be nice if both the program state
  and any locals were inspectable and easily testable...
