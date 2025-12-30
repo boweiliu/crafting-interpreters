@@ -30,7 +30,7 @@ fun my() {
 
 /*
 fun obtain() {
-  val source: List<Int> = listOf(1,2,3,4,5)
+  val source: List<Int> = listOf(1,2,3,4,5).asSequence()
   val acc: MutableList<Int> = mutableListOf(-1)
 
   val s = myEmitter<Int>(source) {
@@ -38,6 +38,7 @@ fun obtain() {
       val it = obtain2()
       if (it >= 4) break
       acc.add(it * 10)
+      yield1(i)
     }
   }
 
@@ -55,3 +56,15 @@ fun obtain() {
 }
 
 */
+
+/*
+
+parserSequence = sequence {
+  tokenStream.forEach { token ->
+    val updates = stateMachine.send(token)
+
+    updates.forEach { when(it) is parserBlob -> yield(it) }
+  }
+}
+*/
+
