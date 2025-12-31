@@ -7,5 +7,7 @@
 # echo ./build/bin/native/debugTest/test.kexe ; echo $?
 # exit 0
 
-find src -name '*.kt' -type f | entr -d -s './gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe --ktest_regex_filter='\'".*$1.*"\'' ; echo $?'
+set -o pipefail
+
+find src -name '*.kt' -type f | entr -d -s './gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe --ktest_regex_filter='\'".*$1.*"\''  2>&1 | tee /tmp/test.out ; echo $? ; cat /tmp/test.out | grep "RUN" -A8  ; rm -f /tmp/test.out '
 #find src -name '*.kt' -type f | entr -d -s './gradlew linkDebugTestNative && ./build/bin/native/debugTest/test.kexe  ; echo $?'

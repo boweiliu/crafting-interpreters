@@ -55,7 +55,7 @@ interface DuoIterator<A, T> {
   fun hasStarted(): Boolean
   fun start(): Unit
   fun canSend(): Boolean
-  fun send(a: A): T
+  fun send(aa: A): T
 
   fun iterator(ins: Sequence<A>): Iterator<T> {
     val seq: Sequence<T> = sequence {
@@ -85,11 +85,14 @@ interface SequenceAndEmitterScope<in T> {
 private class SequenceAndEmitterCoroutine<T>(val myData: Iterator<Int>): AbstractIterator<T>(), SequenceAndEmitterScope<T>, Continuation<Unit>, DuoIterator<Int, T> {
     lateinit var nextStep: Continuation<Unit>
 
-    override fun hasStarted() = false
-    override fun start() { }
+    private var didStart = false
+    override fun hasStarted() = didStart
+    override fun start() {
+      didStart = true
+    }
     override fun iterator() = this
     override fun canSend() = hasNext()
-    override fun send(a: Int): T {
+    override fun send(aa: Int): T {
       // calls the continuation...?
       TODO()
     }
@@ -138,14 +141,14 @@ interface DuoSequenceScope<in T, out A> {
     suspend fun initCoYield(): A
     suspend fun initCoYield(ig: T?): A = initCoYield()
     // suspend fun coYield(ig: T?): A // convienient for duoYield but without the type check
-    suspend fun finalYield(value: T): Unit
+    // suspend fun finalYield(value: T): Unit
 }
 
 
 // interface DuoIterator<A, T> {
 //   fun start(): Unit
 //   fun canSend(): Boolean
-//   fun send(a: A): T
+//   fun send(aa: A): T
 //   // Temp for testing/uncompile
 //   fun iterator(): Iterator<T>
 // }
@@ -155,34 +158,45 @@ private class DuoSequenceCoroutine<A, T>:
   Continuation<T>,
   DuoIterator<A, T>
 {
+    private var didStart = false
+    private var didFinish = false
+    private var bufferedValue: T? = null
     lateinit var firstStep: Continuation<Unit>
-    lateinit var nextStep: Continuation<T>
+    private lateinit var nextStep: Continuation<A>
 
-    override fun iterator() = TODO()
-    override fun start() { }
-    override fun hasStarted() = false
-    override fun canSend() = false
-    override fun send(a: A): T {
-      // calls the continuation...?
-      TODO()
+    override fun iterator() = TODO() // legacy thing, unneeded
+    override fun hasStarted(): Boolean = didStart
+    override fun start() {
+      didStart = true
+      firstStep.resume(Unit)
+      // TODO() ??
+    }
+    override fun canSend() = !didFinish
+    override fun send(aa: A): T {
+      nextStep.resume(aa)
+      val result: T = bufferedValue!!
+      bufferedValue = null
+      return result
+
+      // calls the continuation...? or...?
+      // return suspendCoroutine { cont -> nextStep = cont ; tt }
     }
 
     // Generator implementation
     override suspend fun duoYield(value: T): A {
-      TODO()
+      bufferedValue = value
+      return suspendCoroutine { cont -> nextStep = cont }
     }
     override suspend fun initCoYield(): A {
-      TODO()
+      return suspendCoroutine { cont -> nextStep = cont }
     }
-    override suspend fun finalYield(value: T): Unit {
-      TODO()
-    }
+    // override suspend fun finalYield(value: T): Unit { TODO() }
 
 
     override val context: CoroutineContext get() = EmptyCoroutineContext
 
     override fun resumeWith(result: Result<T>): Unit {
-        result.getOrThrow() // bail out on error
+        bufferedValue = result.getOrThrow()
+        didFinish = true
     }
-
 }

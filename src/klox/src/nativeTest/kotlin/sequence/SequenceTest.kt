@@ -66,8 +66,8 @@ fun duoSequenceCanBeCalled() {
     override fun start() { }
     override fun canSend() = true
     override fun iterator() = TODO()
-    override fun send(a: Int): String {
-      state += a
+    override fun send(aa: Int): String {
+      state += aa
       return state.toString()
     }
   }
@@ -107,7 +107,7 @@ fun duoSequenceUpdatesState() {
     var inp = prevResult ?.let { duoYield(it) } ?: initCoYield() // maybe this is better
     prevResult = (inp + 3).toString()
     inp = duoYield(prevResult)
-    prevResult = (inp + 3).toString()
+    prevResult = (inp + 4).toString()
 
     acc.add(-3)
     prevResult
@@ -117,14 +117,16 @@ fun duoSequenceUpdatesState() {
   myDuoSequence.hasStarted().shouldBe(false)
 
   myDuoSequence.start().shouldBe(Unit)
-  myDuoSequence.hasStarted().shouldBe(true)
   acc.toList().shouldBe(listOf(-1, 39))
+  myDuoSequence.hasStarted().shouldBe(true)
 
   myDuoSequence.canSend().shouldBe(true)
   myDuoSequence.send(10).shouldBe("13")
+  println(" >> bowei 125")
 
   myDuoSequence.canSend().shouldBe(true)
-  myDuoSequence.send(100).shouldBe("103")
+  myDuoSequence.send(100).shouldBe("104")
+  println(" >> bowei 129")
 
   myDuoSequence.canSend().shouldBe(false)
   acc.toList().shouldBe(listOf(-1, 39, -3))
