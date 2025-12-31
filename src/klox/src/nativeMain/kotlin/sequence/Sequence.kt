@@ -110,17 +110,17 @@ private class SequenceAndEmitterCoroutine<T>(val myData: Iterator<Int>): Abstrac
 
 @OptIn(kotlin.experimental.ExperimentalTypeInference::class)
 fun <A, T> duoSequence(
-  @BuilderInference block: suspend DuoSequenceScope<A, T>.() -> Unit
+  @BuilderInference block: suspend DuoSequenceScope<T, A>.() -> T
 ): DuoIterator<A, T> = 
     DuoSequenceCoroutine<A, T>().apply {
-        nextStep = block.createCoroutine(receiver = this, completion = this)
+        firstStep = block.createCoroutine(receiver = this, completion = this)
     }
 
 @RestrictsSuspension
-interface DuoSequenceScope<in A, out T> {
-    suspend fun duoYield(value: A): T
-    suspend fun initCoYield(): T
-    suspend fun finalYield(value: A): Unit
+interface DuoSequenceScope<in T, out A> {
+    suspend fun duoYield(value: T): A
+    suspend fun initCoYield(): A
+    suspend fun finalYield(value: T): Unit
 }
 
 
@@ -133,11 +133,12 @@ interface DuoSequenceScope<in A, out T> {
 // }
 
 private class DuoSequenceCoroutine<A, T>:
-  DuoSequenceScope<A, T>,
-  Continuation<Unit>,
+  DuoSequenceScope<T, A>,
+  Continuation<T>,
   DuoIterator<A, T>
 {
-    lateinit var nextStep: Continuation<Unit>
+    lateinit var firstStep: Continuation<Unit>
+    lateinit var nextStep: Continuation<T>
 
     override fun iterator() = TODO()
     override fun start() { }
@@ -147,20 +148,22 @@ private class DuoSequenceCoroutine<A, T>:
       TODO()
     }
 
+    // Generator implementation
+    override suspend fun duoYield(value: T): A {
+      TODO()
+    }
+    override suspend fun initCoYield(): A {
+      TODO()
+    }
+    override suspend fun finalYield(value: T): Unit {
+      TODO()
+    }
+
+
     override val context: CoroutineContext get() = EmptyCoroutineContext
 
-    override fun resumeWith(result: Result<Unit>) {
+    override fun resumeWith(result: Result<T>): Unit {
         result.getOrThrow() // bail out on error
     }
 
-    // Generator implementation
-    override suspend fun duoYield(value: A): T {
-      TODO()
-    }
-    override suspend fun initCoYield(): T {
-      TODO()
-    }
-    override suspend fun finalYield(value: A): Unit {
-      TODO()
-    }
 }
