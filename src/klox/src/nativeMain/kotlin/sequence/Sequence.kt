@@ -23,8 +23,6 @@ interface DuoIterator<A, T> {
   }
 }
 
-
-
 @OptIn(kotlin.experimental.ExperimentalTypeInference::class)
 fun <A, T> duoSequence(
   @BuilderInference block: suspend DuoSequenceScope<T, A>.() -> T
@@ -38,7 +36,7 @@ interface DuoSequenceScope<in T, out A> {
     suspend fun duoYield(value: T): A
     suspend fun initCoYield(): A
     suspend fun initCoYield(ig: T?): A = initCoYield()
-    // suspend fun coYield(ig: T?): A // convienient for duoYield but without the type check
+    suspend fun coYield(value: T?): A // convienient for duoYield but without the type check
 }
 
 private class DuoSequenceCoroutine<A, T>:
@@ -46,8 +44,9 @@ private class DuoSequenceCoroutine<A, T>:
   Continuation<T>,
   DuoIterator<A, T>
 {
-    private var didStart = false
-    private var didFinish = false
+    private var didStart = false // was the coroutine started at all
+    private var didInit = false // did we pass the first initial coYield (receive the first input)
+    private var didFinish = false // did we return the last output
     private var bufferedValue: T? = null
     lateinit var firstStep: Continuation<Unit>
     private lateinit var nextStep: Continuation<A>
@@ -72,7 +71,16 @@ private class DuoSequenceCoroutine<A, T>:
     }
 
     override suspend fun initCoYield(): A {
+      didInit = true
       return suspendCoroutine { cont -> nextStep = cont }
+    }
+
+    override suspend fun coYield(value: T?): A {
+      return if (didInit) {
+        this.duoYield(value as T)
+      } else {
+        this.initCoYield()
+      }
     }
 
     // Continuation/coroutine implementation
