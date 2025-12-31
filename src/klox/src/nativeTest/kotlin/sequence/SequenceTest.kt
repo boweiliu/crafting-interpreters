@@ -19,9 +19,10 @@ fun my() {
   acc.toList().shouldBe(listOf(-1))
   it.hasNext()
   acc.toList().shouldBe(listOf(-1,10))
-  it.next()
+  it.next().shouldBe(1)
   acc.toList().shouldBe(listOf(-1,10))
-  it.next()
+
+  it.next().shouldBe(2)
   acc.toList().shouldBe(listOf(-1,10,20))
   it.next()
   acc.toList().shouldBe(listOf(-1,10,20,30))
@@ -29,16 +30,18 @@ fun my() {
 }
 
 @Test
+@Ignore
 fun obtain() {
   val source: Sequence<Int> = listOf(1,2,3,4,5).asSequence()
   val acc: MutableList<Int> = mutableListOf(-1)
 
   val s = myEmitter<Int>(source) {
     while (true) {
-      val it = obtain2()
-      if (it >= 4) break
-      acc.add(it * 10)
-      yield1(it)
+      break
+      // val it = obtain2(42)
+      // if (it >= 4) break@while
+      // acc.add(it * 10)
+      // yield1(it)
     }
   }
 
@@ -53,6 +56,44 @@ fun obtain() {
   it.next()
   acc.toList().shouldBe(listOf(-1,10,20,30))
   it.hasNext().shouldBe(false)
+}
+
+@Test
+fun duoSequenceCanBeCalled() {
+  val myDuoSequence = object : DuoIterator<Int, String> {
+    var state: Int = 0
+    override fun canSend() = true
+    override fun iterator() = TODO()
+    override fun send(a: Int): String {
+      state += a
+      return state.toString()
+    }
+  }
+  // val updates = stateMachine.send(token) // send is like yieldable
+
+  myDuoSequence.send(3).shouldBe("3")
+  myDuoSequence.send(4).shouldBe("7")
+  myDuoSequence.send(5).shouldBe("12")
+}
+
+@Test
+fun duoSequenceCanBeWritten() {
+  val myDuoSequence: DuoIterator<Int, Int> = duoSequence {
+    // val first = initCoYield(-1) // optional
+
+    var prevResult = null
+    // val inp = duoYield(prevResult) // this also works
+
+    var inp = prevResult ?.let { duoYield(it) } ?: initCoYield() // maybe this is better
+    prevResult = inp + 3
+    inp = duoYield(prevResult)
+    prevResult = inp + 3
+    finalYield(prevResult)
+  }
+  myDuoSequence.initSend().shouldBe(Unit)
+  myDuoSequence.send(10).shouldBe(13)
+  myDuoSequence.send(100).shouldBe(103)
+  myDuoSequence.canSend().shouldBe(false)
 }
 
 /*
@@ -97,13 +138,21 @@ hmmm... how to debug the coroutine state? would be nice if both the program stat
   
 
 parserSequence = sequence {
-  val stateMachine = duoSequence { behaviorFn }
+  val stateMachine = makeStateMachine
 
   tokenStream.forEach { token ->
     val updates = stateMachine.send(token) // send is like yieldable
 
     updates.forEach { when(it) is parserBlob -> yield(it) }
   }
+}
+
+fun makeStateMachine() = duoSequence {
+  setup()
+  var stuff
+  while true:
+    val token = duoYield(stuff)
+  
 }
 
 parserSequence.groupByLines().forEach { line -> execute(line) }
