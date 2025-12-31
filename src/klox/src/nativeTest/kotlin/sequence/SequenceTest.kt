@@ -82,9 +82,12 @@ on the coroutine side, our state machine calls
 
 what I really want to write is something like
 
-    return(stuffSoFar) jmpto HERE
+    return <ME>(stuffSoFar) jmpto HERE
     HERE{}: (val nextToken, ) cofn
     
+   mirroring the funcall syntax
+    fncall foo(a) jmpto HERE
+    HERE{}: val result = yield <ME>
 
 hmmm... how to debug the coroutine state? would be nice if both the program state
  and any locals were inspectable and easily testable...
