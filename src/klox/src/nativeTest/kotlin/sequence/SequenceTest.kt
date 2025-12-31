@@ -62,6 +62,7 @@ fun obtain() {
 fun duoSequenceCanBeCalled() {
   val myDuoSequence = object : DuoIterator<Int, String> {
     var state: Int = 0
+    override fun hasStarted() = false
     override fun start() { }
     override fun canSend() = true
     override fun iterator() = TODO()
@@ -79,7 +80,6 @@ fun duoSequenceCanBeCalled() {
 
 @Test
 fun duoSequenceCanBeWritten() {
-  val acc: MutableList<Int> = mutableListOf(-1)
   val myDuoSequence: DuoIterator<Int, String> = duoSequence {
     var prevResult: String? = null
 
@@ -112,13 +112,22 @@ fun duoSequenceUpdatesState() {
     acc.add(-3)
     prevResult
   }
+
   acc.toList().shouldBe(listOf(-1))
+  myDuoSequence.hasStarted().shouldBe(false)
+
   myDuoSequence.start().shouldBe(Unit)
+  myDuoSequence.hasStarted().shouldBe(true)
   acc.toList().shouldBe(listOf(-1, 39))
+
+  myDuoSequence.canSend().shouldBe(true)
   myDuoSequence.send(10).shouldBe("13")
+
+  myDuoSequence.canSend().shouldBe(true)
   myDuoSequence.send(100).shouldBe("103")
-  acc.toList().shouldBe(listOf(-1, 39, -3))
+
   myDuoSequence.canSend().shouldBe(false)
+  acc.toList().shouldBe(listOf(-1, 39, -3))
 }
 
 /*

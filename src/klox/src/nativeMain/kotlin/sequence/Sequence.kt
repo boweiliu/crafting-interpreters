@@ -52,6 +52,7 @@ fun <T> myEmitter(
     }
 
 interface DuoIterator<A, T> {
+  fun hasStarted(): Boolean
   fun start(): Unit
   fun canSend(): Boolean
   fun send(a: A): T
@@ -84,6 +85,7 @@ interface SequenceAndEmitterScope<in T> {
 private class SequenceAndEmitterCoroutine<T>(val myData: Iterator<Int>): AbstractIterator<T>(), SequenceAndEmitterScope<T>, Continuation<Unit>, DuoIterator<Int, T> {
     lateinit var nextStep: Continuation<Unit>
 
+    override fun hasStarted() = false
     override fun start() { }
     override fun iterator() = this
     override fun canSend() = hasNext()
@@ -158,6 +160,7 @@ private class DuoSequenceCoroutine<A, T>:
 
     override fun iterator() = TODO()
     override fun start() { }
+    override fun hasStarted() = false
     override fun canSend() = false
     override fun send(a: A): T {
       // calls the continuation...?
