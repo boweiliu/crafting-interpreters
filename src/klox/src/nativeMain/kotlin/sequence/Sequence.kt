@@ -120,6 +120,7 @@ fun <A, T> duoSequence(
 interface DuoSequenceScope<in T, out A> {
     suspend fun duoYield(value: T): A
     suspend fun initCoYield(): A
+    suspend fun initCoYield(ig: T?): A = initCoYield()
     suspend fun finalYield(value: T): Unit
 }
 
