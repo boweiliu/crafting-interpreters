@@ -51,15 +51,8 @@ fun <T> myEmitter(
         nextStep = block.createCoroutine(receiver = this, completion = this)
     }
 
-@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
-fun <T> duoSequence(
-  @BuilderInference block: suspend SequenceAndEmitterScope<T>.() -> Unit
-): DuoIterator<Int, T> = 
-    SequenceAndEmitterCoroutine<T>(listOf<Int>().asSequence().iterator()).apply {
-        nextStep = block.createCoroutine(receiver = this, completion = this)
-    }
-
 interface DuoIterator<A, T> {
+  fun start(): Unit
   fun canSend(): Boolean
   fun send(a: A): T
   // Temp for testing/uncompile
@@ -77,6 +70,7 @@ interface SequenceAndEmitterScope<in T> {
 private class SequenceAndEmitterCoroutine<T>(val myData: Iterator<Int>): AbstractIterator<T>(), SequenceAndEmitterScope<T>, Continuation<Unit>, DuoIterator<Int, T> {
     lateinit var nextStep: Continuation<Unit>
 
+    override fun start() { }
     override fun iterator() = this
     override fun canSend() = hasNext()
     override fun send(a: Int): T {
@@ -110,5 +104,63 @@ private class SequenceAndEmitterCoroutine<T>(val myData: Iterator<Int>): Abstrac
     override suspend fun duoYield(i: Int): Int {
         return 0
         // return myData.next()
+    }
+}
+
+
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+fun <A, T> duoSequence(
+  @BuilderInference block: suspend DuoSequenceScope<A, T>.() -> Unit
+): DuoIterator<A, T> = 
+    DuoSequenceCoroutine<A, T>().apply {
+        nextStep = block.createCoroutine(receiver = this, completion = this)
+    }
+
+@RestrictsSuspension
+interface DuoSequenceScope<in A, out T> {
+    suspend fun duoYield(value: A): T
+    suspend fun initCoYield(): T
+    suspend fun finalYield(value: A): Unit
+}
+
+
+// interface DuoIterator<A, T> {
+//   fun start(): Unit
+//   fun canSend(): Boolean
+//   fun send(a: A): T
+//   // Temp for testing/uncompile
+//   fun iterator(): Iterator<T>
+// }
+
+private class DuoSequenceCoroutine<A, T>:
+  DuoSequenceScope<A, T>,
+  Continuation<Unit>,
+  DuoIterator<A, T>
+{
+    lateinit var nextStep: Continuation<Unit>
+
+    override fun iterator() = TODO()
+    override fun start() { }
+    override fun canSend() = false
+    override fun send(a: A): T {
+      // calls the continuation...?
+      TODO()
+    }
+
+    override val context: CoroutineContext get() = EmptyCoroutineContext
+
+    override fun resumeWith(result: Result<Unit>) {
+        result.getOrThrow() // bail out on error
+    }
+
+    // Generator implementation
+    override suspend fun duoYield(value: A): T {
+      TODO()
+    }
+    override suspend fun initCoYield(): T {
+      TODO()
+    }
+    override suspend fun finalYield(value: A): Unit {
+      TODO()
     }
 }

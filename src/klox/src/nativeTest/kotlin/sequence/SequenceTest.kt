@@ -62,6 +62,7 @@ fun obtain() {
 fun duoSequenceCanBeCalled() {
   val myDuoSequence = object : DuoIterator<Int, String> {
     var state: Int = 0
+    override fun start() { }
     override fun canSend() = true
     override fun iterator() = TODO()
     override fun send(a: Int): String {
@@ -81,7 +82,7 @@ fun duoSequenceCanBeWritten() {
   val myDuoSequence: DuoIterator<Int, Int> = duoSequence {
     // val first = initCoYield(-1) // optional
 
-    var prevResult = null
+    var prevResult: Int? = null
     // val inp = duoYield(prevResult) // this also works
 
     var inp = prevResult ?.let { duoYield(it) } ?: initCoYield() // maybe this is better
@@ -90,7 +91,7 @@ fun duoSequenceCanBeWritten() {
     prevResult = inp + 3
     finalYield(prevResult)
   }
-  myDuoSequence.initSend().shouldBe(Unit)
+  myDuoSequence.start().shouldBe(Unit)
   myDuoSequence.send(10).shouldBe(13)
   myDuoSequence.send(100).shouldBe(103)
   myDuoSequence.canSend().shouldBe(false)
