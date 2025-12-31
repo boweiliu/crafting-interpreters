@@ -81,11 +81,23 @@ fun duoSequenceCanBeCalled() {
 fun duoSequenceCanBeWritten() {
   val acc: MutableList<Int> = mutableListOf(-1)
   val myDuoSequence: DuoIterator<Int, String> = duoSequence {
-    // val first = initCoYield(-1) // optional
+    var prevResult: String? = null
 
+    (1..10).forEach {
+      val inp = prevResult ?.let { duoYield(it) } ?: initCoYield() // maybe this is better
+      prevResult = (inp + 3).toString()
+    }
+
+    prevResult!!
+  }
+}
+
+@Test
+fun duoSequenceUpdatesState() {
+  val acc: MutableList<Int> = mutableListOf(-1)
+  val myDuoSequence: DuoIterator<Int, String> = duoSequence {
     var prevResult: String? = null
     acc.add(39)
-    // val inp = duoYield(prevResult) // this also works
 
     var inp = prevResult ?.let { duoYield(it) } ?: initCoYield() // maybe this is better
     prevResult = (inp + 3).toString()
