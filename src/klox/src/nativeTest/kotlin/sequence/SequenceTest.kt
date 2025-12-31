@@ -92,9 +92,7 @@ fun duoSequenceCanBeWritten() {
   }
   val inputSequence = (1..10).toList().asSequence()
   val itr = myDuoSequence.iterator(inputSequence)
-  itr.forEach { st ->
-    println(st)
-  }
+  itr.forEach { }
 }
 
 @Test
@@ -122,11 +120,9 @@ fun duoSequenceUpdatesState() {
 
   myDuoSequence.canSend().shouldBe(true)
   myDuoSequence.send(10).shouldBe("13")
-  println(" >> bowei 125")
 
   myDuoSequence.canSend().shouldBe(true)
   myDuoSequence.send(100).shouldBe("104")
-  println(" >> bowei 129")
 
   myDuoSequence.canSend().shouldBe(false)
   acc.toList().shouldBe(listOf(-1, 39, -3))
