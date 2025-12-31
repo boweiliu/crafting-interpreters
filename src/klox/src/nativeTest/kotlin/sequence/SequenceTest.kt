@@ -29,7 +29,7 @@ fun duoSequenceCanBeWritten() {
     var prevResult: String? = null
 
     (1..10).forEach {
-      val inp = prevResult ?.let { duoYield(it) } ?: initCoYield() // maybe this is better
+      val inp = coYield(prevResult) // maybe this is better
       prevResult = (inp + 3).toString()
     }
 

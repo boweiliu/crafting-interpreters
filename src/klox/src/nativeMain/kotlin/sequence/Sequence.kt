@@ -77,6 +77,7 @@ private class DuoSequenceCoroutine<A, T>:
 
     override suspend fun coYield(value: T?): A {
       return if (didInit) {
+        @Suppress("UNCHECKED_CAST")
         this.duoYield(value as T)
       } else {
         this.initCoYield()
