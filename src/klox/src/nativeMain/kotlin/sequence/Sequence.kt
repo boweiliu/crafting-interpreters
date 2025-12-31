@@ -55,6 +55,20 @@ interface DuoIterator<A, T> {
   fun start(): Unit
   fun canSend(): Boolean
   fun send(a: A): T
+
+  fun iterator(ins: Sequence<A>): Iterator<T> {
+    val seq: Sequence<T> = sequence {
+      this@DuoIterator.start()
+      ins.forEach { aa ->
+        if (this@DuoIterator.canSend())
+          yield(this@DuoIterator.send(aa))
+        else
+          return@sequence
+      }
+    }
+    return seq.iterator()
+  }
+
   // Temp for testing/uncompile
   fun iterator(): Iterator<T>
 }

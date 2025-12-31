@@ -90,6 +90,11 @@ fun duoSequenceCanBeWritten() {
 
     prevResult!!
   }
+  val inputSequence = (1..10).toList().asSequence()
+  val itr = myDuoSequence.iterator(inputSequence)
+  itr.forEach { st ->
+    println(st)
+  }
 }
 
 @Test
