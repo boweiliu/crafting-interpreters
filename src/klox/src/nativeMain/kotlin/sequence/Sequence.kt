@@ -9,8 +9,8 @@ interface DuoIterator<A, T> {
   fun canSend(): Boolean
   fun send(aa: A): T
 
-  fun iterator(ins: Sequence<A>): Iterator<T> {
-    val seq: Sequence<T> = sequence {
+  fun mapSequence(ins: Sequence<A>): Sequence<T> {
+    return sequence {
       this@DuoIterator.start()
       ins.forEach { aa ->
         if (this@DuoIterator.canSend())
@@ -19,9 +19,16 @@ interface DuoIterator<A, T> {
           return@sequence
       }
     }
-    return seq.iterator()
   }
+
+  fun iterator(ins: Sequence<A>): Iterator<T> = this.mapSequence(ins).iterator()
 }
+
+
+@OptIn(kotlin.experimental.ExperimentalTypeInference::class)
+fun <A, T> Sequence<A>.mapDuoSequence(
+  @BuilderInference block: suspend DuoSequenceScope<T, A>.() -> T
+): Sequence<T> = duoSequence(block).mapSequence(this)
 
 @OptIn(kotlin.experimental.ExperimentalTypeInference::class)
 fun <A, T> duoSequence(

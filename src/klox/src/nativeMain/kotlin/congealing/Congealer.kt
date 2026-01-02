@@ -5,6 +5,9 @@ import sequence.*
 
 data class CongealedToken(val t : Any?)
 
+fun <T> Sequence<T>.peekAhead3(): Sequence<Triple<T?, T?, T?>> = TODO()
+fun <T> Sequence<T>.dropLast(): Sequence<T> = TODO()
+
 fun runCongealer(
   inputTokens: Sequence<Token>,
   sourceFname: String = "<unnamed>",
@@ -13,69 +16,72 @@ fun runCongealer(
 
   var myState: Any? = null
 
-  val outputTokens = inputTokens.peekAhead3().dropLast()
-    .mapDuoSequence<Token, CongealedToken> {
+  @Suppress("UNCHECKED_CAST")
+  val xx = inputTokens.peekAhead3().dropLast() as Sequence<Triple<Token, Token?, Token?>>
+  val outputTokens: Sequence<CongealedToken> = xx
+    .mapDuoSequence<Triple<Token, Token?, Token?>, CongealedToken> {
       val stateStack: MutableList<String> = mutableListOf("ROOT")
       var buffer: MutableList<String> = mutableListOf()
-      var results: MutableList<Any?>? = null
+      var result: CongealedToken? = null
 
-      var (curr, nxt1, nxt2)  = results ?.let { duoYield(it) }
-        ?: initCoYield().also { results = mutableListOf<Any?>() }
+      var tokenTriple: Triple<Token, Token?, Token?> = result ?.let { duoYield(it) }
+        ?: initCoYield()
+      var curr: Token = tokenTriple.first
 
       stateStack.add("ADD")
       while (true) {
-        val topState = stateStack.peek()
-        return@while when (topState) {
+        val topState = stateStack.lastOrNull()!!
+        when (topState) {
           "ROOT" -> {
-            stateStack.add("EXPR")
+            CStackReplace("EXPR", "ROOT_END")
           }
           "EXPR" -> {
-            stateStack.add("ADD")
+            CStackReplace("ADD")
           }
           "ADD" -> {
-            stateStack.addBack("MULT, ADD_MORE")
+            CStackReplace("MULT, ADD_MORE")
           }
           "ADD_MORE" -> {
             if (curr.type == TokenType.PLUS) {
-              stateStack.replaceWith("ADD")
+              CStackReplace("ADD_END", "ADD")
             } else {
-              stateStack.pop()
+              CStackPop()
             }
           }
           "MULT" -> {
-            stateStack.replaceWith("UNARY", "MULT_MORE")
+            CStackReplace("UNARY", "MULT_MORE")
           }
           "MULT_MORE" -> {
             if (curr.type == TokenType.STAR) {
-              stateStack.replaceWith("MULT")
+              CStackReplace("MULT")
             } else {
-              stateStack.pop()
+              CStackPop()
             }
           }
           "UNARY" -> {
             if (curr.type == TokenType.MINUS) {
-              stateStack.add("UNARY")
+              CStackAdd("UNARY")
             } else {
-              stateStack.replaceWith("GROUP")
+              CStackReplace("GROUP")
             }
           }
           "GROUP" -> {
             if (curr.type == TokenType.LEFT_PAREN) {
-              stateStack.addBack("EXPR", "GROUP_END")
+              CStackReplace("EXPR", "GROUP_END")
             } else {
-              stateStack.replaceWith("LITERAL")
+              CStackReplace("LITERAL")
             }
           }
           "GROUP_END" -> {
             if (curr.type == TokenType.RIGHT_PAREN) {
-              stateStack.pop()
+              CStackPop()
             } else {
               TODO("error")
             }
           }
           "LITERAL" -> {
             if (curr.type == TokenType.NUMBER) {
-              stateStack.pop()
+              CStackPop()
               TODO("just added number")
             } else {
               TODO("error")
@@ -83,6 +89,41 @@ fun runCongealer(
           }
         }
       }
+
+      result!!
+    }
+
+  return Pair(outputTokens, errsAcc.toList<InterpreterError>())
+}
+
+sealed class CState {
+  data class Ss(val s: String): CState()
+  data class Sn(val s: String, val n: Int): CState()
+}
+
+sealed class CDatum(val ty: String) {
+  // data class Tr(val tr: CTransition): CDatum("Tr")
+  data class Re(val re: CStackReplace): CDatum("Re")
+  data class R2(val r2: CStackReplace2): CDatum("R2")
+}
+
+data class CDatas(val stuff: List<CDatum>) {
+  companion object { }
+}
+
+data class CStackReplace(val todos: List<CState>) { 
+  constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
+}
+data class CStackReplace2(val todos: List<CState>)
+fun CStackPop() = CStackReplace()
+data class CStackAdd(val todos: List<CState>) { 
+  constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
+}
+  
+fun computeActionDatas(statePeek: CState, statePeek2: CState?, curr: Token, nxt1: Token?): CDatas {
+  TODO()
+}
+
 
       // // hmm. try to compute the state transitions.
       // // val (datas, ) = computeCongealerActionDatas(old = myState, curr, nxt1, nxt2, this.coYield)
@@ -110,8 +151,3 @@ fun runCongealer(
       //     actionDatas.add(CError())
       //   }
       // }
-    }.buildSequenceUsing(inputTokens.peekAhead3().dropLast())
-
-  return Pair(outputTokens, errsAcc.toList<InterpreterError>())
-}
-
