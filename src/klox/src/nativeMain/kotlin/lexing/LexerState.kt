@@ -213,6 +213,10 @@ fun InterpreterErrorType.toLError(vararg args: Any?): LError {
   return LError(this, this.fformat(*args))
 }
 
+// Possible imperative actions that we want to perform:
+// Emit an error
+// Update the lexer state in one of 3 different ways
+// Emit a finsihed token
 sealed class LDatum(val ty: String) {
   data class Er(val er: LError): LDatum("Er")
   data class UpC(val up: LUpdateC): LDatum("Up")
@@ -221,6 +225,10 @@ sealed class LDatum(val ty: String) {
   data class To(val to: LToken): LDatum("To")
 }
 
+// Updates to the lexer state come in 3 forms:
+// 1. Transition the state enum
+// 2. Append a character to the string builder 
+// 3. Set the error boolean to true.
 data class LTransition(val st: LexerState)
 data class LUpdateC(val ch: Char)
 data class LUpdateE(val didError: Boolean)
