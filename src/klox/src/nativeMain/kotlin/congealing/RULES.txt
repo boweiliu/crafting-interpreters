@@ -1,0 +1,101 @@
+
+
+--
+
+The difference between descent and ascent parsers:
+
+descent is the one we can write first. the logic there is:
+
+DESCENT: construct the top of the tree with all its layers and traverse across it
+* the tree is constructed at the top first; i am at the "plus" stage, where there are arbitrary many summands (possibly just 1 which is the trivial case).
+* all summands are terms of below type (which are higher precedence).
+* At the next level: i am at the "mult" stage, which is a similar N-ary op composed of subterms
+* At the parens stage we loop back around
+* Start parsing by enqueueing as many stages as you can (hopefully one is a leaf eventually, e.g. literal)
+* when you can't stay in that level anymore, pop up and then drop back down
+
+ASCENT: build up the tree from the bottom, adding layers when needed
+* The sorta default assumption is "as you see more ops, they always right-associate, and then you have one giga-POPSTACK operation at the end"
+* more detail: as you see terms, you are very hesitant to close the ops. for instance your first "^3...", it might be a literal that's part of a larger term
+* (there's a root to the tree which you can close the group for if you want, but that's not a good assumption)
+* when you hit "1 + 2 + ... " , that's the moment you know you can close the first group (1 + 2) and treat that as a well-formed unit and build more leaves to the right
+* To implement: use a mapping of token -> which terms it can start with, and terms -> which terms they can continue onto, or which ones they can't (and we should close group).
+* for instance: "1 * 2" at this point we are capable of closing a "MULT_3_ARG" group, but we check first to see if the next token is something of higher precedence. if not, then we close the group and turn it into a MULT_EXPR term, which can be continued only by the things of lower precedence
+
+
+--
+
+Parsing grammar
+
+```
+lit          = NUMBER
+group        = "(" expr ")"
+unary        = "-" expr
+mult         = expr "*" expr
+add          = expr "+" expr
+expr         = lit | group | unary | mult | add
+
+```
+
+rollout example:
+a * b + c
+ read "a"
+ it's a LIT_?
+ try to continue it to: group? no. unary? no. mult?
+ peek "*", that works
+ close LIT
+ we seem to have mult_l * mult_l
+ read "b", that finishes
+ now we have "a * b" MULT_?
+ can we continue it? to mult again?
+ peek "+", that fails
+ close MULT
+ try to continue it to: add?
+ 
+
+so what we really have here is:
+LIT -> can be continued to MULT | ADD | END_OF_GROUP
+MULT -> can be continued to MULT | END_OF_GROUP
+END_OF_GROUP -> can be continued 
+
+
+
+mult         = mult_E
+mult_E       = (mult_L | mult_E) "*" mult_L
+mult_L       = group | unary | expr_LEAF
+
+
+mult_expr    = under_mult "*" expr
+under_mult   = group_expr | unary_expr | lit_expr
+add_expr     = under_add "+" expr
+under_add    = group_expr | unary_expr | mult_expr | lit_expr
+
+expr         = group_expr | unary_expr | binary_expr // distinguishable by first token
+binary_expr  = mult_expr | add_expr | lit_expr
+```
+
+// 1 * 2 * 3, 1 LIT MULT_L * 2 LIT MULT_L MULT_E
+"3 + 4 * 5"
+rollout looks like:
+ expr?
+ READ 3
+ switch to binary_expr
+ try mult_expr ? maybe, assume yes
+   under_mult?
+   try group/unary, no, done
+   lit? yes. DONE : "3 LIT"
+   PEEK "+"
+   DONE "3 LIT UNDER_MULT"
+ try add_expr
+   continue add? maybe
+     expr under add?
+   
+   
+ 
+ 
+
+
+
+"4 * 5 + 3"
+"7 * 6 * - ( - 1 + 2 ) "
+
