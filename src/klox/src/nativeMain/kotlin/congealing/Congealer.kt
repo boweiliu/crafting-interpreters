@@ -161,7 +161,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       CDatas.of(CStackReplace("MULT", "ADD_MORE"))
     }
     "ADD_MORE" -> {
-      if (curr.type == TokenType.PLUS) {
+      if (curr.type == TokenType.PLUS || curr.type == TokenType.MINUS) {
         CDatas.of(CStackReplace("MULT", "ADD_END", "ADD_MORE"), CChomp())
       } else {
         CDatas.of(CStackPop())
@@ -174,7 +174,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       CDatas.of(CStackReplace("UNARY", "MULT_MORE"))
     }
     "MULT_MORE" -> {
-      if (curr.type == TokenType.STAR) {
+      if (curr.type == TokenType.STAR || curr.type == TokenType.SLASH || curr.type == TokenType.PERCENT) {
         CDatas.of(CStackReplace("UNARY", "MULT_END", "MULT_MORE"), CChomp())
       } else {
         CDatas.of(CStackPop(), CMatchFail(TokenType.STAR))
