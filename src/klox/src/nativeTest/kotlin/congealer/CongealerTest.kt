@@ -122,10 +122,11 @@ class ComputeActionDatasTest {
   @Test
   fun itSimulatesForLiteral() {
     val results = simulate(Token.TTL(TokenType.NUMBER, TokenType.EOF))
-    results.shouldBe(listOf(
-      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"), Token.TT(TokenType.EOF)
-    ))
     results.shouldHaveSize(3)
+    results.shouldBe(listOf(
+      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"),
+      Token.TT(TokenType.EOF)
+    ))
   }
 
 }
