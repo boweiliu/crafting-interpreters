@@ -54,6 +54,7 @@ sealed class CDatum(val ty: String) {
   // data class Tr(val tr: CTransition): CDatum("Tr")
   data class Re(val re: CStackReplace): CDatum("Re")
   data class R2(val r2: CStackReplace2): CDatum("R2")
+  data class Ad(val ad: CStackAdd): CDatum("Ad")
 }
 
 data class CDatas(val stuff: List<CDatum>) {
@@ -62,12 +63,14 @@ data class CDatas(val stuff: List<CDatum>) {
       when(it) {
         is CStackReplace  -> CDatum.Re(it)
         is CStackReplace2 -> CDatum.R2(it)
+        is CStackAdd      -> CDatum.Ad(it)
         else -> null
       }
     }.let { CDatas(it) }
   }
 }
 
+// the todos are in the order the human thinks; they must be reversed for the work stack
 data class CStackReplace(val todos: List<CState>) { 
   constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
 }
