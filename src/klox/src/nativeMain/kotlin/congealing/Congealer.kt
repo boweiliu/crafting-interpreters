@@ -25,88 +25,29 @@ fun runCongealer(
   var myState: Any? = null
 
   @Suppress("UNCHECKED_CAST")
-  val xx = inputTokens.peekAhead3().dropLast() as Sequence<Triple<Token, Token?, Token?>>
-  val outputTokens: Sequence<CongealedToken> = xx
-    .mapDuoSequence<Triple<Token, Token?, Token?>, CongealedToken> {
+  val input_seq = (inputTokens.peekAhead3().dropLast() as Sequence<Triple<Token, Token?, Token?>>)
+
+  val outputTokens: Sequence<CongealedToken> = input_seq
+    .mapDuoSequence {
       val stateStack: MutableList<String> = mutableListOf("ROOT")
       var buffer: MutableList<String> = mutableListOf()
       var result: CongealedToken? = null
 
-      var tokenTriple: Triple<Token, Token?, Token?> = result ?.let { duoYield(it) }
+      var (curr, nxt1, nxt2) = result ?.let { duoYield(it) }
         ?: initCoYield()
-      var curr: Token = tokenTriple.first
 
       stateStack.add("ADD")
       while (false) {
         val topState = stateStack.lastOrNull()!!
-        when (topState) {
-          "ROOT" -> {
-            CStackReplace("EXPR", "ROOT_END")
-          }
-          "EXPR" -> {
-            CStackReplace("ADD")
-          }
-          "ADD" -> {
-            CStackReplace("MULT, ADD_MORE")
-          }
-          "ADD_MORE" -> {
-            if (curr.type == TokenType.PLUS) {
-              CStackReplace("ADD_END", "ADD")
-            } else {
-              CStackPop()
-            }
-          }
-          "MULT" -> {
-            CStackReplace("UNARY", "MULT_MORE")
-          }
-          "MULT_MORE" -> {
-            if (curr.type == TokenType.STAR) {
-              CStackReplace("MULT")
-            } else {
-              CStackPop()
-            }
-          }
-          "UNARY" -> {
-            if (curr.type == TokenType.MINUS) {
-              CStackAdd("UNARY")
-            } else {
-              CStackReplace("GROUP")
-            }
-          }
-          "GROUP" -> {
-            if (curr.type == TokenType.LEFT_PAREN) {
-              CStackReplace("EXPR", "GROUP_END")
-            } else {
-              CStackReplace("LITERAL")
-            }
-          }
-          "GROUP_END" -> {
-            if (curr.type == TokenType.RIGHT_PAREN) {
-              CStackPop()
-            } else {
-              TODO("error")
-            }
-          }
-          "LITERAL" -> {
-            if (curr.type == TokenType.NUMBER) {
-              CStackPop()
-              TODO("just added number")
-            } else {
-              TODO("error")
-            }
-          }
-        }
       }
-
       result!!
     }
-
   return Pair(outputTokens, errsAcc.toList<InterpreterError>())
 }
 
-sealed class CState {
-  data class Ss(val s: String): CState()
-  data class Sn(val s: String, val n: Int): CState()
+sealed class CState(val s: String) {
+  data class Ss(val ss: String): CState(ss)
+  data class Sn(val ss: String, val n: Int): CState(ss)
 }
 
 sealed class CDatum(val ty: String) {
@@ -116,7 +57,15 @@ sealed class CDatum(val ty: String) {
 }
 
 data class CDatas(val stuff: List<CDatum>) {
-  companion object { }
+  companion object {
+    fun of(vararg args: Any) = args.mapNotNull { it ->
+      when(it) {
+        is CStackReplace  -> CDatum.Re(it)
+        is CStackReplace2 -> CDatum.R2(it)
+        else -> null
+      }
+    }.let { CDatas(it) }
+  }
 }
 
 data class CStackReplace(val todos: List<CState>) { 
@@ -129,7 +78,64 @@ data class CStackAdd(val todos: List<CState>) {
 }
   
 fun computeActionDatas(statePeek: CState, statePeek2: CState?, curr: Token, nxt1: Token?): CDatas {
-  TODO()
+  return when (statePeek.s) {
+    "ROOT" -> {
+      CDatas.of(CStackReplace("EXPR", "ROOT_END"))
+    }
+    "EXPR" -> {
+      CDatas.of(CStackReplace("ADD"))
+    }
+    "ADD" -> {
+      CDatas.of(CStackReplace("MULT, ADD_MORE"))
+    }
+    "ADD_MORE" -> {
+      if (curr.type == TokenType.PLUS) {
+        CDatas.of(CStackReplace("ADD_END", "ADD"))
+      } else {
+        CDatas.of(CStackPop())
+      }
+    }
+    "MULT" -> {
+      CDatas.of(CStackReplace("UNARY", "MULT_MORE"))
+    }
+    "MULT_MORE" -> {
+      if (curr.type == TokenType.STAR) {
+        CDatas.of(CStackReplace("MULT"))
+      } else {
+        CDatas.of(CStackPop())
+      }
+    }
+    "UNARY" -> {
+      if (curr.type == TokenType.MINUS) {
+        CDatas.of(CStackAdd("UNARY"))
+      } else {
+        CDatas.of(CStackReplace("GROUP"))
+      }
+    }
+    "GROUP" -> {
+      if (curr.type == TokenType.LEFT_PAREN) {
+        CDatas.of(CStackReplace("EXPR", "GROUP_END"))
+      } else {
+        CDatas.of(CStackReplace("LITERAL"))
+      }
+    }
+    "GROUP_END" -> {
+      if (curr.type == TokenType.RIGHT_PAREN) {
+        CDatas.of(CStackPop())
+      } else {
+        TODO("error")
+      }
+    }
+    "LITERAL" -> {
+      if (curr.type == TokenType.NUMBER) {
+        CDatas.of(CStackPop())
+        TODO("just added number")
+      } else {
+        TODO("error")
+      }
+    }
+    else -> TODO("should never happen")
+  }
 }
 
 
