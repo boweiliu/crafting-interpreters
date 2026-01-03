@@ -90,11 +90,9 @@ class ComputeActionDatasTest {
     var curr: Token? = tokens.removeFirstOrNull()
     var acc: MutableList<Any?> = mutableListOf()
     while(true) {
-      println("stateStack is $stateStack")
       val peekState = stateStack.lastOrNull() ?: break
       if (curr == null) break
       val (actions, ) = computeActionDatas(peekState, curr)
-      println("actions is $actions")
       actions.forEach {
         when(it) {
           is CDatum.Re -> {
