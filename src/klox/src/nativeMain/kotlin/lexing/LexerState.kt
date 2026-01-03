@@ -235,10 +235,8 @@ data class LUpdateE(val didError: Boolean)
 
 data class LDatas(val stuff: List<LDatum> = listOf()) {
   companion object {
-    fun of(vararg args: Any?): LDatas {
-      return LDatas(args.mapNotNull { dat ->
+    fun of(vararg args: Any?): LDatas = args.mapNotNull { dat ->
         when (dat) {
-          null -> null
           is LTransition -> LDatum.Tr(dat)
           is LUpdateC    -> LDatum.UpC(dat)
           is LUpdateE    -> LDatum.UpE(dat)
@@ -246,8 +244,7 @@ data class LDatas(val stuff: List<LDatum> = listOf()) {
           is LToken      -> LDatum.To(dat)
           else -> null
         }
-      }.toList())
-    }
+      }.let { LDatas(it) }
   }
 }
 
