@@ -87,19 +87,26 @@ class ComputeActionDatasTest {
     stateStack: ArrayDeque<CState> = ArrayDeque(listOf(CState.Ss("ROOT"))),
   ): List<Any?> {
     val tokens: MutableList<Token> = toks.toMutableList()
-    var curr: Token = tokens.removeFirst()
+    var curr: Token? = tokens.removeFirstOrNull()
     var acc: MutableList<Any?> = mutableListOf()
     while(true) {
+      println("stateStack is $stateStack")
       val peekState = stateStack.lastOrNull() ?: break
+      if (curr == null) break
       val (actions, ) = computeActionDatas(peekState, curr)
+      println("actions is $actions")
       actions.forEach {
         when(it) {
           is CDatum.Re -> {
             stateStack.pop()
             it.re.todos.reversed().forEach { stateStack.push(it) }
           }
-          is CDatum.CChomp -> { curr = tokens.removeFirst() }
+          is CDatum.CChomp -> {
+            acc.add(curr)
+            curr = tokens.removeFirstOrNull()
+          }
           is CDatum.Em -> acc.add(it.em.cToken)
+          is CDatum.Er -> throw RuntimeException("$it")
           else -> { }
         }
       }
@@ -108,8 +115,20 @@ class ComputeActionDatasTest {
   }
 
   @Test
-  fun itSimulatesForLiteral() {
-    simulate(Token.TTL(TokenType.MINUS, TokenType.NUMBER))
+  @Ignore
+  fun itErrorsForEOF() {
+    val results = simulate(Token.TTL(TokenType.EOF))
+    results.shouldHaveSize(2)
   }
+
+  @Test
+  fun itSimulatesForLiteral() {
+    val results = simulate(Token.TTL(TokenType.NUMBER, TokenType.EOF))
+    results.shouldBe(listOf(
+      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"), Token.TT(TokenType.EOF)
+    ))
+    results.shouldHaveSize(3)
+  }
+
 }
   
