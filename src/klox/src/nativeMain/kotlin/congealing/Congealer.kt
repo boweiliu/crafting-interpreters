@@ -5,8 +5,16 @@ import sequence.*
 
 data class CongealedToken(val t : Any?)
 
-fun <T> Sequence<T>.peekAhead3(): Sequence<Triple<T?, T?, T?>> = TODO()
-fun <T> Sequence<T>.dropLast(): Sequence<T> = TODO()
+fun <T> Sequence<T>.dropLast(): Sequence<T> {
+  val oldSeq = this.iterator()
+  val newSeq = sequence<T> {
+    while (oldSeq.hasNext()) {
+      val curr = oldSeq.next()
+      if (oldSeq.hasNext()) yield(curr)
+    }
+  }
+  return newSeq
+}
 
 fun runCongealer(
   inputTokens: Sequence<Token>,
@@ -29,7 +37,7 @@ fun runCongealer(
       var curr: Token = tokenTriple.first
 
       stateStack.add("ADD")
-      while (true) {
+      while (false) {
         val topState = stateStack.lastOrNull()!!
         when (topState) {
           "ROOT" -> {
