@@ -55,6 +55,7 @@ sealed class CDatum(val ty: String) {
   data class Re(val re: CStackReplace): CDatum("Re")
   data class R2(val r2: CStackReplace2): CDatum("R2")
   data class Ad(val ad: CStackAdd): CDatum("Ad")
+  object CChomp: CDatum("Ch")
 }
 
 data class CDatas(val stuff: List<CDatum>) {
@@ -63,7 +64,8 @@ data class CDatas(val stuff: List<CDatum>) {
       when(it) {
         is CStackReplace  -> CDatum.Re(it)
         is CStackReplace2 -> CDatum.R2(it)
-        is CStackAdd      -> CDatum.Ad(it)
+        is CStackAdd -> CDatum.Ad(it)
+        is CDatum.CChomp  -> it
         else -> null
       }
     }.let { CDatas(it) }
@@ -74,65 +76,92 @@ data class CDatas(val stuff: List<CDatum>) {
 data class CStackReplace(val todos: List<CState>) { 
   constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
 }
-data class CStackReplace2(val todos: List<CState>)
+data class CStackReplace2(val todos: List<CState>) {
+  constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
+}
 fun CStackPop() = CStackReplace()
 data class CStackAdd(val todos: List<CState>) { 
   constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
+}
+fun CChomp() = CDatum.CChomp
+data class CEmit(val c: CongealedToken) {
+  constructor(s: String) : this(CongealedToken(s))
 }
   
 fun computeActionDatas(statePeek: CState, statePeek2: CState?, curr: Token, nxt1: Token?): CDatas {
   return when (statePeek.s) {
     "ROOT" -> {
-      CDatas.of(CStackReplace("EXPR", "ROOT_END"))
+      CDatas.of(CStackReplace("EXPR", "ROOT_CLOSE"))
+    }
+    "ROOT_CLOSE" -> {
+      if (curr.type == TokenType.EOF) {
+        CDatas.of(CChomp(), CStackPop(), CEmit("ROOT_1"))
+      } else {
+        TODO("error")
+      }
     }
     "EXPR" -> {
       CDatas.of(CStackReplace("ADD"))
     }
     "ADD" -> {
-      CDatas.of(CStackReplace("MULT, ADD_MORE"))
+      // if (statePeek2?.s == "ADD_END")
+      //   CDatas.of(CStackReplace2("MULT", "ADD_END", "ADD_MORE"))
+      // else
+      CDatas.of(CStackReplace("MULT", "ADD_MORE"))
     }
     "ADD_MORE" -> {
       if (curr.type == TokenType.PLUS) {
-        CDatas.of(CStackReplace("ADD_END", "ADD"))
+        CDatas.of(CChomp(), CStackReplace("MULT", "ADD_END", "ADD_MORE"))
       } else {
         CDatas.of(CStackPop())
       }
+    }
+    "ADD_END" -> {
+      CDatas.of(CStackPop(), CEmit("ADD_3"))
     }
     "MULT" -> {
       CDatas.of(CStackReplace("UNARY", "MULT_MORE"))
     }
     "MULT_MORE" -> {
       if (curr.type == TokenType.STAR) {
-        CDatas.of(CStackReplace("MULT"))
+        CDatas.of(CChomp(), CStackReplace("UNARY", "MULT_END", "MULT_MORE"))
       } else {
         CDatas.of(CStackPop())
       }
     }
+    "MULT_END" -> {
+      CDatas.of(CStackPop(), CEmit("MULT_3"))
+    }
     "UNARY" -> {
       if (curr.type == TokenType.MINUS) {
-        CDatas.of(CStackAdd("UNARY"))
+        CDatas.of(CChomp(), CStackReplace("UNARY", "UNARY_END"))
       } else {
         CDatas.of(CStackReplace("GROUP"))
       }
     }
+    "UNARY_END" -> {
+      CDatas.of(CStackPop(), CEmit("UNARY_2"))
+    }
     "GROUP" -> {
       if (curr.type == TokenType.LEFT_PAREN) {
-        CDatas.of(CStackReplace("EXPR", "GROUP_END"))
+        CDatas.of(CChomp(), CStackReplace("EXPR", "GROUP_CLOSE"))
       } else {
         CDatas.of(CStackReplace("LITERAL"))
       }
     }
-    "GROUP_END" -> {
+    "GROUP_CLOSE" -> {
       if (curr.type == TokenType.RIGHT_PAREN) {
-        CDatas.of(CStackPop())
+        CDatas.of(CChomp(), CStackReplace("GROUP_END"))
       } else {
         TODO("error")
       }
     }
+    "GROUP_END" -> {
+      CDatas.of(CStackPop(), CEmit("GROUP_3"))
+    }
     "LITERAL" -> {
       if (curr.type == TokenType.NUMBER) {
-        CDatas.of(CStackPop())
-        TODO("just added number")
+        CDatas.of(CChomp(), CStackPop(), CEmit("LITERAL_1"))
       } else {
         TODO("error")
       }
