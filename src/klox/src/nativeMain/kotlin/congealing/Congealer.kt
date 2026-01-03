@@ -16,6 +16,9 @@ fun <T> Sequence<T>.dropLast(): Sequence<T> {
   return newSeq
 }
 
+fun ArrayDeque<CState>.push(cs: CState) = this.add(cs)
+fun ArrayDeque<CState>.pop() = this.removeLast()
+
 fun runCongealer(
   inputTokens: Sequence<Token>,
   sourceFname: String = "<unnamed>",
@@ -27,28 +30,73 @@ fun runCongealer(
   @Suppress("UNCHECKED_CAST")
   // val input_seq = (inputTokens.peekAhead3().dropLast() as Sequence<Triple<Token, Token?, Token?>>)
 
-  val outputTokens: Sequence<Sequence<CongealedToken>> = inputTokens.peekAhead3()
+  val outputTokens: Sequence<List<CongealedToken>> = inputTokens.peekAhead3()
     .mapDuoSequence {
       val stateStack: ArrayDeque<CState> = ArrayDeque(listOf(CState.Ss("ROOT")))
-      var results: MutableList<CongealedToken>? = null
 
+      var results: MutableList<CongealedToken> = mutableListOf()
+
+      var (curr, nxt1, nxt2) = initCoYield()
+
+      // when we should grab the next input token.
+      // Necessary to hold this because we dont always need a fresh token, and when we do,
+      // we would like to emit as much data as possible before requesting another
+      var shouldChomp: Boolean = false
+
+      // Loop over processing actions on the stateStack
       while (true) {
-        var (curr, nxt1, nxt2) = results ?.let { duoYield(it.asSequence()) }
-          ?: initCoYield().also { results = mutableListOf() }
+        // var (curr, nxt1, nxt2) = results ?.let { duoYield(it) }
+        //   ?: initCoYield().also { results = mutableListOf() }
+
+        val peekState = stateStack.lastOrNull() ?: break
+
+        if (peekState.doesNeedToken() && shouldChomp) {
+          duoYield(results).let { (a,b,c) ->
+            curr = a; nxt1 = b; nxt2 = c;
+          }.also {
+            results = mutableListOf()
+            shouldChomp = false
+          }
+        }
+
         if (curr == null) break
 
-        val (actions, ) = computeActionDatas(stateStack.lastOrNull()!!, curr)
+        val (actions, ) = computeActionDatas(peekState, curr)
         actions.forEach {
           when(it) {
-	    is CDatum.Em -> {
+	    is CDatum.Re -> {
+	      stateStack.pop()
+	      it.re.todos.reversed().forEach { 
+	        stateStack.push(it)
+	      }
+	    }
+	    is CDatum.CChomp -> {
+	      shouldChomp = true // delay this, need to process other actions first
             }
-	    else -> { }
+	    is CDatum.Em -> {
+	      results.add(it.em.cToken)
+	    }
+	    is CDatum.Er -> {
+	      TODO("give more info about the error")
+            }
+	    is CDatum.Mf -> {
+	      // ignore for now, only useful when errors show up
+            }
+            // else -> {
+            //   // TODO
+            //   duoYield(results).also { results = mutableListOf() }.let { (a,b,c) ->
+            //     curr = a; nxt1 = b; nxt2 = c;
+            //   }
+            // }
           }
         }
       }
-      results!!.asSequence()
+      results
     }
-  return Pair(outputTokens.flatten(), errsAcc.toList<InterpreterError>())
+  return Pair(
+    outputTokens.map { it.asSequence() }.flatten(),
+    errsAcc.toList<InterpreterError>()
+  )
 }
 
 sealed class CState(val s: String) {
@@ -59,7 +107,7 @@ sealed class CState(val s: String) {
 sealed class CDatum(val ty: String) {
   data class Re(val re: CStackReplace): CDatum("Re")
   // data class R2(val r2: CStackReplace2): CDatum("R2")
-  data class Ad(val ad: CStackAdd): CDatum("Ad")
+  // data class Ad(val ad: CStackAdd): CDatum("Ad")
   object CChomp: CDatum("Ch")
   data class Em(val em: CEmit): CDatum("Em")
   data class Er(val er: CError): CDatum("Er")
@@ -72,7 +120,7 @@ data class CDatas(val stuff: List<CDatum>) {
       when(it) {
         is CStackReplace   -> CDatum.Re(it)
         // is CStackReplace2  -> CDatum.R2(it)
-        is CStackAdd       -> CDatum.Ad(it)
+        // is CStackAdd       -> CDatum.Ad(it)
         is CDatum.CChomp   -> it
         is CEmit           -> CDatum.Em(it)
         is CError          -> CDatum.Er(it)
@@ -91,15 +139,18 @@ data class CStackReplace(val todos: List<CState>) {
 //   constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
 // }
 fun CStackPop() = CStackReplace()
-data class CStackAdd(val todos: List<CState>) { 
-  constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
-}
+// data class CStackAdd(val todos: List<CState>) { 
+//   constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
+// }
 fun CChomp() = CDatum.CChomp
-data class CEmit(val c: CongealedToken) {
+data class CEmit(val cToken: CongealedToken) {
   constructor(s: String) : this(CongealedToken(s))
 }
 data class CError(val state: CState, val curr: Token, val expectedToken: TokenType? = null)
 data class CMatchFail(val tokenType: TokenType)
+
+
+fun CState.doesNeedToken(): Boolean = !(this.s.endsWith("_END"))
 
 fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = null): CDatas {
   return when (statePeek.s) {
