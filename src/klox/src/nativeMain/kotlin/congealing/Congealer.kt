@@ -57,6 +57,7 @@ sealed class CDatum(val ty: String) {
   object CChomp: CDatum("Ch")
   data class Em(val em: CEmit): CDatum("Em")
   data class Er(val er: CError): CDatum("Er")
+  data class Mf(val mf: CMatchFail): CDatum("Mf")
 }
 
 data class CDatas(val stuff: List<CDatum>) {
@@ -69,6 +70,7 @@ data class CDatas(val stuff: List<CDatum>) {
         is CDatum.CChomp   -> it
         is CEmit           -> CDatum.Em(it)
         is CError          -> CDatum.Er(it)
+        is CMatchFail      -> CDatum.Mf(it)
         else -> null
       }
     }.let { CDatas(it) }
@@ -90,7 +92,8 @@ fun CChomp() = CDatum.CChomp
 data class CEmit(val c: CongealedToken) {
   constructor(s: String) : this(CongealedToken(s))
 }
-data class CError(val state: CState, val curr: Token)
+data class CError(val state: CState, val curr: Token, val expectedToken: TokenType? = null)
+data class CMatchFail(val tokenType: TokenType)
   
 fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = null): CDatas {
   return when (statePeek.s) {
@@ -99,10 +102,13 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     }
     "ROOT_CLOSE" -> {
       if (curr.type == TokenType.EOF) {
-        CDatas.of(CStackPop(), CEmit("ROOT_1"), CChomp())
+        CDatas.of(CStackReplace("ROOT_END"), CChomp())
       } else {
-        CDatas.of(CError(statePeek, curr))
+        CDatas.of(CError(statePeek, curr, TokenType.EOF))
       }
+    }
+    "ROOT_END" -> {
+      CDatas.of(CStackPop(), CEmit("ROOT_1"))
     }
     "EXPR" -> {
       CDatas.of(CStackReplace("ADD"))
@@ -130,7 +136,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       if (curr.type == TokenType.STAR) {
         CDatas.of(CStackReplace("UNARY", "MULT_END", "MULT_MORE"), CChomp())
       } else {
-        CDatas.of(CStackPop())
+        CDatas.of(CStackPop(), CMatchFail(TokenType.STAR))
       }
     }
     "MULT_END" -> {
@@ -140,7 +146,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       if (curr.type == TokenType.MINUS) {
         CDatas.of(CStackReplace("UNARY", "UNARY_END"), CChomp())
       } else {
-        CDatas.of(CStackReplace("GROUP"))
+        CDatas.of(CStackReplace("GROUP"), CMatchFail(TokenType.MINUS))
       }
     }
     "UNARY_END" -> {
@@ -150,14 +156,14 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       if (curr.type == TokenType.LEFT_PAREN) {
         CDatas.of(CStackReplace("EXPR", "GROUP_CLOSE"), CChomp())
       } else {
-        CDatas.of(CStackReplace("LITERAL"))
+        CDatas.of(CStackReplace("LITERAL"), CMatchFail(TokenType.LEFT_PAREN))
       }
     }
     "GROUP_CLOSE" -> {
       if (curr.type == TokenType.RIGHT_PAREN) {
         CDatas.of(CStackReplace("GROUP_END"), CChomp())
       } else {
-        CDatas.of(CError(statePeek, curr))
+        CDatas.of(CError(statePeek, curr, TokenType.RIGHT_PAREN))
       }
     }
     "GROUP_END" -> {
@@ -165,10 +171,13 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     }
     "LITERAL" -> {
       if (curr.type == TokenType.NUMBER) {
-        CDatas.of(CStackPop(), CEmit("LITERAL_1"), CChomp())
+        CDatas.of(CStackReplace("LITERAL_END"), CChomp())
       } else {
-        CDatas.of(CError(statePeek, curr))
+        CDatas.of(CError(statePeek, curr, TokenType.NUMBER))
       }
+    }
+    "LITERAL_END" -> {
+      CDatas.of(CStackPop(), CEmit("LITERAL_1"))
     }
     else -> {
       CDatas.of(CError(statePeek, curr))
