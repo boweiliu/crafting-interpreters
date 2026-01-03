@@ -80,6 +80,14 @@ sealed interface LiteralVal {
       is DoubleVal -> this.v
     }
   }
+
+  fun isNumeric(): Boolean = (this is IntVal || this is DoubleVal)
+  fun toDoubleOrNull(): Double? = when (this) {
+    is IntVal -> this.v.toDouble()
+    is DoubleVal -> this.v
+    is StringVal -> null
+  }
+  fun toDouble(): Double = this.toDoubleOrNull()!!
 }
 
 val Token.Companion.LOOKUP_1CH_TO_TOKEN: Map<Char, TokenType>

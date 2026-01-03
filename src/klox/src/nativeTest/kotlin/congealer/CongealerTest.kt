@@ -80,6 +80,13 @@ class UtilsTest() {
     it.pop(2).shouldBe(listOf(2,3))
     it.toList().shouldBe(listOf(1))
   }
+
+  @Test
+  fun pushWorks() {
+    val it: ArrayDeque<Int> = ArrayDeque(listOf(1,2,3))
+    it.push(4)
+    it.toList().shouldBe(listOf(1,2,3,4))
+  }
 }
 
 class ComputeActionDatasTest {

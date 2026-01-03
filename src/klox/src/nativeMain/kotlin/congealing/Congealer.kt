@@ -68,6 +68,7 @@ fun runCongealer(
 	      }
 	    }
 	    is CDatum.CChomp -> {
+	      results.add(CongealedToken.RawToken(curr))
 	      shouldChomp = true // delay this, need to process other actions first
             }
 	    is CDatum.Em -> {
@@ -151,7 +152,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       }
     }
     "ROOT_END" -> {
-      CDatas.of(CStackPop(), CEmit("ROOT", 1))
+      CDatas.of(CStackPop(), CEmit("ROOT", 2))
     }
     "EXPR" -> {
       CDatas.of(CStackReplace("ADD"))
