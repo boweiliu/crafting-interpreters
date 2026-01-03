@@ -129,5 +129,70 @@ class ComputeActionDatasTest {
     ))
   }
 
+  @Test
+  fun itSimulatesForUnary() {
+    val results = simulate(Token.TTL(TokenType.MINUS, TokenType.NUMBER, TokenType.EOF))
+    results.shouldHaveSize(5)
+    results.shouldBe(listOf(
+      Token.TT(TokenType.MINUS),
+      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"),
+      CongealedToken("UNARY_2"),
+      Token.TT(TokenType.EOF)
+    ))
+  }
+
+  @Test
+  fun itSimulatesForPlus() {
+    val results = simulate(Token.TTL(TokenType.NUMBER, TokenType.PLUS, TokenType.NUMBER, TokenType.EOF))
+    results.shouldHaveSize(7)
+    results.shouldBe(listOf(
+      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"),
+      Token.TT(TokenType.PLUS),
+      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"),
+      CongealedToken("ADD_3"),
+      Token.TT(TokenType.EOF)
+    ))
+  }
+
+  @Test
+  fun itSimulatesForReallyComplicatedThing() {
+    val results = simulate(Token.TTL(
+      TokenType.NUMBER,
+      TokenType.PLUS,
+      TokenType.NUMBER,
+      TokenType.STAR,
+      TokenType.LEFT_PAREN,
+      TokenType.NUMBER,
+      TokenType.PLUS,
+      TokenType.MINUS,
+      TokenType.NUMBER,
+      TokenType.RIGHT_PAREN,
+      TokenType.PLUS,
+      TokenType.NUMBER,
+      TokenType.EOF,
+    ))
+    results.forEachIndexed { a, b -> println("$a $b") }
+    results.shouldBe(listOf(
+      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"),
+      Token.TT(TokenType.PLUS),
+      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"),
+      Token.TT(TokenType.STAR),
+      Token.TT(TokenType.LEFT_PAREN),
+      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"),
+      Token.TT(TokenType.PLUS),
+      Token.TT(TokenType.MINUS),
+      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"),
+      CongealedToken("UNARY_2"),
+      CongealedToken("ADD_3"),
+      Token.TT(TokenType.RIGHT_PAREN),
+      CongealedToken("GROUP_3"),
+      CongealedToken("MULT_3"),
+      CongealedToken("ADD_3"), // hmm, should we expect the plus or the add_3 first?
+      Token.TT(TokenType.PLUS), // ans: add_3 since that otherwise the plus would be wrong group
+      Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"),
+      CongealedToken("ADD_3"),
+      Token.TT(TokenType.EOF),
+    ))
+  }
 }
   
