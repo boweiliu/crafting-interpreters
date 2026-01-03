@@ -236,6 +236,7 @@ suspend fun LexScope.tryDoMunch2(
 
 // Helper function to iterate through a array and peek ahead at it.
 // Always returns a final 3xnull.
+// TODO(bowei): add a boolean flag for whether to yield the final null/null/null or not.
 fun <T> Sequence<T>.peekAhead3(): Sequence<Triple<T?, T?, T?>> {
   var prev2: T? = null
   var prev: T? = null
