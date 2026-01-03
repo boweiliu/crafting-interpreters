@@ -1,4 +1,5 @@
 1. refactor lineNo + fileName = location
+1. Consider: incremental parsing/lexing ? like split the thing into chunks and do stuff in parallel, maybe throw away work if needed
 
 ## KOTLIN
 
