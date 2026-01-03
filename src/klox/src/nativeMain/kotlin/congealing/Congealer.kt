@@ -3,7 +3,11 @@ package congealing
 import lexing.*
 import sequence.*
 
-data class CongealedToken(val t : Any?)
+sealed interface CongealedToken {
+  data class RawToken(val tt: Token): CongealedToken
+  data class ParsingToken(val ss: String): CongealedToken
+  companion object { }
+}
 
 fun <T> Sequence<T>.dropLast(): Sequence<T> {
   val oldSeq = this.iterator()
@@ -121,7 +125,7 @@ fun CStackPop() = CStackReplace()
 fun CChomp() = CDatum.CChomp
 // Emit a group indicator
 data class CEmit(val cToken: CongealedToken) {
-  constructor(s: String) : this(CongealedToken(s))
+  constructor(s: String) : this(CongealedToken.ParsingToken(s))
 }
 // Error while parsing
 data class CError(val state: CState, val curr: Token, val expectedToken: TokenType? = null)
