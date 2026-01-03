@@ -171,7 +171,6 @@ class ComputeActionDatasTest {
       TokenType.NUMBER,
       TokenType.EOF,
     ))
-    results.forEachIndexed { a, b -> println("$a $b") }
     results.shouldBe(listOf(
       Token.TT(TokenType.NUMBER), CongealedToken("LITERAL_1"),
       Token.TT(TokenType.PLUS),

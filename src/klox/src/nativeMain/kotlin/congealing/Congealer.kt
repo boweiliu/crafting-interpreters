@@ -33,7 +33,7 @@ fun runCongealer(
 
       var (curr, nxt1, nxt2) = initCoYield()
 
-      // when we should grab the next input token.
+      // When we should grab the next input token.
       // Necessary to hold this because we dont always need a fresh token, and when we do,
       // we would like to emit as much data as possible before requesting another
       var shouldChomp: Boolean = false
@@ -131,6 +131,8 @@ data class CMatchFail(val tokenType: TokenType)
 // When we CChomp a token, it's not always true we need another token immediately
 fun CState.doesNeedToken(): Boolean = !(this.s.endsWith("_END"))
 
+// TODO: it looks like this could be replaced with a big lookup dictionary
+// TODO: autogenerate this based on EBNF
 fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = null): CDatas {
   return when (statePeek.s) {
     "ROOT" -> {
