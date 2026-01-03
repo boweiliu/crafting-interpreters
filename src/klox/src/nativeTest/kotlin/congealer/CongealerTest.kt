@@ -32,13 +32,6 @@ class Parens() {
   fun itHandlesParensWrappingNumber() {
     val inputTokens = Token.TTL(TokenType.LEFT_PAREN, TokenType.NUMBER, TokenType.RIGHT_PAREN)
   }
-
-  @Test
-  fun itMovesState() {
-    var stateStack: MutableList<String> = mutableListOf()
-    // val result = stateStack.processToken(TokenType.LEFT_PAREN)
-    // TODO()
-  }
 }
 
 @Test
@@ -71,3 +64,22 @@ class UtilsTest() {
     ins.dropLast().take(3).toList().shouldBe(listOf(7,7,7))
   }
 }
+
+class ComputeActionDatasTest {
+  @Test
+  fun itJustRuns() {
+    computeActionDatas(CState.Ss("ROOT"), Token.TT(TokenType.NUMBER))
+  }
+
+  @Test
+  fun itReturnsModificationsForROOT() {
+    val result = computeActionDatas(CState.Ss("ROOT"), Token.TT(TokenType.NUMBER))
+    result.stuff.shouldHaveSize(1)
+    result.stuff.map { it.ty }.shouldBe(listOf("Re"))
+    result.stuff[0].let { it as CDatum.Re }.re.todos.let { todos -> 
+      todos.shouldHaveSize(2)
+      todos.map { it.s }.shouldBe(listOf("EXPR", "ROOT_CLOSE"))
+    }
+  }
+}
+  

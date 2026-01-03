@@ -47,12 +47,12 @@ fun runCongealer(
 
 sealed class CState(val s: String) {
   data class Ss(val ss: String): CState(ss)
-  data class Sn(val ss: String, val n: Int): CState(ss)
+  // data class Sn(val ss: String, val n: Int): CState(ss)
 }
 
 sealed class CDatum(val ty: String) {
   data class Re(val re: CStackReplace): CDatum("Re")
-  data class R2(val r2: CStackReplace2): CDatum("R2")
+  // data class R2(val r2: CStackReplace2): CDatum("R2")
   data class Ad(val ad: CStackAdd): CDatum("Ad")
   object CChomp: CDatum("Ch")
   data class Em(val em: CEmit): CDatum("Em")
@@ -64,7 +64,7 @@ data class CDatas(val stuff: List<CDatum>) {
     fun of(vararg args: Any) = args.mapNotNull { it ->
       when(it) {
         is CStackReplace   -> CDatum.Re(it)
-        is CStackReplace2  -> CDatum.R2(it)
+        // is CStackReplace2  -> CDatum.R2(it)
         is CStackAdd       -> CDatum.Ad(it)
         is CDatum.CChomp   -> it
         is CEmit           -> CDatum.Em(it)
@@ -79,9 +79,9 @@ data class CDatas(val stuff: List<CDatum>) {
 data class CStackReplace(val todos: List<CState>) { 
   constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
 }
-data class CStackReplace2(val todos: List<CState>) {
-  constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
-}
+// data class CStackReplace2(val todos: List<CState>) {
+//   constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
+// }
 fun CStackPop() = CStackReplace()
 data class CStackAdd(val todos: List<CState>) { 
   constructor(vararg args: String) : this(args.map { it -> CState.Ss(it) })
@@ -92,7 +92,7 @@ data class CEmit(val c: CongealedToken) {
 }
 data class CError(val state: CState, val curr: Token)
   
-fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState?): CDatas {
+fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = null): CDatas {
   return when (statePeek.s) {
     "ROOT" -> {
       CDatas.of(CStackReplace("EXPR", "ROOT_CLOSE"))

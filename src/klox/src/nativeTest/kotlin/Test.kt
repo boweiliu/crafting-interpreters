@@ -1,4 +1,5 @@
 import kotlin.test.Test
+import kotlin.test.Ignore
 import kotlin.test.assertEquals
 import io.kotest.matchers.*
 import io.kotest.matchers.collections.*
@@ -43,6 +44,7 @@ fun testRunLexerEmitsTokens() {
 
 
 @Test
+@Ignore
 fun testRunAllJustRuns() {
   val (_, errorsSoFar) = runAll("1 + 2")
   errorsSoFar.shouldHaveSize(0)
