@@ -19,3 +19,10 @@ https://github.com/JetBrains/kotlin/blob/2.3.0/libraries/stdlib/src/kotlin/corou
 https://github.com/JetBrains/kotlin/blob/2.3.0/libraries/stdlib/src/kotlin/collections/SequenceBuilder.kt#L53
 
 
+https://www.reddit.com/r/ProgrammingLanguages/comments/1pxxe63/metaprogramming_for_recursive_descent_parsers_vs/
+
+https://discuss.ocaml.org/t/why-a-handwritten-parser/7282
+
+https://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
+
+
