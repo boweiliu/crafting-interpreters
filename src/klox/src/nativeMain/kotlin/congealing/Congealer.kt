@@ -5,7 +5,7 @@ import sequence.*
 
 sealed interface CongealedToken {
   data class RawToken(val tt: Token): CongealedToken
-  data class ParsingToken(val ss: String): CongealedToken
+  data class ParsingToken(val ss: String, val arity: Int = 0 /* TODO rm default */): CongealedToken
   companion object { }
 }
 
@@ -20,8 +20,9 @@ fun <T> Sequence<T>.dropLast(): Sequence<T> {
   return newSeq
 }
 
-fun ArrayDeque<CState>.push(cs: CState) = this.add(cs)
-fun ArrayDeque<CState>.pop() = this.removeLast()
+fun <T> ArrayDeque<T>.push(cs: T) = this.add(cs)
+fun <T> ArrayDeque<T>.pop() = this.removeLast()
+fun <T> ArrayDeque<T>.pop(n: Int) = (0..<n).map { this.pop() }.reversed()
 
 fun runCongealer(
   inputTokens: Sequence<Token>,
@@ -125,7 +126,7 @@ fun CStackPop() = CStackReplace()
 fun CChomp() = CDatum.CChomp
 // Emit a group indicator
 data class CEmit(val cToken: CongealedToken) {
-  constructor(s: String) : this(CongealedToken.ParsingToken(s))
+  constructor(s: String, n: Int) : this(CongealedToken.ParsingToken(s, n))
 }
 // Error while parsing
 data class CError(val state: CState, val curr: Token, val expectedToken: TokenType? = null)
@@ -150,7 +151,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       }
     }
     "ROOT_END" -> {
-      CDatas.of(CStackPop(), CEmit("ROOT_1"))
+      CDatas.of(CStackPop(), CEmit("ROOT", 1))
     }
     "EXPR" -> {
       CDatas.of(CStackReplace("ADD"))
@@ -166,7 +167,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       }
     }
     "ADD_END" -> {
-      CDatas.of(CStackPop(), CEmit("ADD_3"))
+      CDatas.of(CStackPop(), CEmit("ADD", 3))
     }
     "MULT" -> {
       CDatas.of(CStackReplace("UNARY", "MULT_MORE"))
@@ -179,7 +180,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       }
     }
     "MULT_END" -> {
-      CDatas.of(CStackPop(), CEmit("MULT_3"))
+      CDatas.of(CStackPop(), CEmit("MULT", 3))
     }
     "UNARY" -> {
       if (curr.type == TokenType.MINUS) {
@@ -189,7 +190,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       }
     }
     "UNARY_END" -> {
-      CDatas.of(CStackPop(), CEmit("UNARY_2"))
+      CDatas.of(CStackPop(), CEmit("UNARY", 2))
     }
     "GROUP" -> {
       if (curr.type == TokenType.LEFT_PAREN) {
@@ -206,7 +207,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       }
     }
     "GROUP_END" -> {
-      CDatas.of(CStackPop(), CEmit("GROUP_3"))
+      CDatas.of(CStackPop(), CEmit("GROUP", 3))
     }
     "LITERAL" -> {
       if (curr.type == TokenType.NUMBER) {
@@ -216,7 +217,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       }
     }
     "LITERAL_END" -> {
-      CDatas.of(CStackPop(), CEmit("LITERAL_1"))
+      CDatas.of(CStackPop(), CEmit("LITERAL", 1))
     }
     else -> {
       CDatas.of(CError(statePeek, curr))

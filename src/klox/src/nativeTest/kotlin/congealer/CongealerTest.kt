@@ -6,7 +6,7 @@ import io.kotest.matchers.*
 import io.kotest.matchers.collections.*
 
 
-fun CongealedToken.Companion.TT(s: String) = CongealedToken.ParsingToken(s)
+fun CongealedToken.Companion.TT(s: String, n: Int = 0) = CongealedToken.ParsingToken(s, n)
 
 fun Token.Companion.TT(type: TokenType) =
   Token(type, lexeme = "", literal = null, lineNo = 0, fileName = "")
@@ -65,6 +65,20 @@ class UtilsTest() {
   fun dropLastWorksLazily() {
     val ins = sequence { while(true) yield(7) }
     ins.dropLast().take(3).toList().shouldBe(listOf(7,7,7))
+  }
+
+  @Test
+  fun popWorks() {
+    val it: ArrayDeque<Int> = ArrayDeque(listOf(1,2,3))
+    it.pop().shouldBe(3)
+    it.toList().shouldBe(listOf(1,2))
+  }
+
+  @Test
+  fun popNWorks() {
+    val it: ArrayDeque<Int> = ArrayDeque(listOf(1,2,3))
+    it.pop(2).shouldBe(listOf(2,3))
+    it.toList().shouldBe(listOf(1))
   }
 }
 
@@ -127,7 +141,7 @@ class ComputeActionDatasTest {
     val results = simulate(Token.TTL(TokenType.NUMBER, TokenType.EOF))
     results.shouldHaveSize(3)
     results.shouldBe(listOf(
-      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL_1"),
+      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
       Token.TT(TokenType.EOF)
     ))
   }
@@ -138,8 +152,8 @@ class ComputeActionDatasTest {
     results.shouldHaveSize(5)
     results.shouldBe(listOf(
       Token.TT(TokenType.MINUS),
-      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL_1"),
-      CongealedToken.TT("UNARY_2"),
+      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
+      CongealedToken.TT("UNARY", 2),
       Token.TT(TokenType.EOF)
     ))
   }
@@ -149,10 +163,10 @@ class ComputeActionDatasTest {
     val results = simulate(Token.TTL(TokenType.NUMBER, TokenType.PLUS, TokenType.NUMBER, TokenType.EOF))
     results.shouldHaveSize(7)
     results.shouldBe(listOf(
-      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL_1"),
+      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
       Token.TT(TokenType.PLUS),
-      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL_1"),
-      CongealedToken.TT("ADD_3"),
+      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
+      CongealedToken.TT("ADD", 3),
       Token.TT(TokenType.EOF)
     ))
   }
@@ -175,24 +189,24 @@ class ComputeActionDatasTest {
       TokenType.EOF,
     ))
     results.shouldBe(listOf(
-      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL_1"),
+      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
       Token.TT(TokenType.PLUS),
-      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL_1"),
+      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
       Token.TT(TokenType.STAR),
       Token.TT(TokenType.LEFT_PAREN),
-      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL_1"),
+      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
       Token.TT(TokenType.PLUS),
-      Token.TT(TokenType.MINUS),
-      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL_1"),
-      CongealedToken.TT("UNARY_2"),
-      CongealedToken.TT("ADD_3"),
+      Token.TT(TokenType.MINUS), // 10
+      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
+      CongealedToken.TT("UNARY", 2),
+      CongealedToken.TT("ADD", 3),
       Token.TT(TokenType.RIGHT_PAREN),
-      CongealedToken.TT("GROUP_3"),
-      CongealedToken.TT("MULT_3"),
-      CongealedToken.TT("ADD_3"), // hmm, should we expect the plus or the add_3 first?
+      CongealedToken.TT("GROUP", 3),
+      CongealedToken.TT("MULT", 3),
+      CongealedToken.TT("ADD", 3), // hmm, should we expect the plus or the add_3 first?
       Token.TT(TokenType.PLUS), // ans: add_3 since that otherwise the plus would be wrong group
-      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL_1"),
-      CongealedToken.TT("ADD_3"),
+      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
+      CongealedToken.TT("ADD", 3),
       Token.TT(TokenType.EOF),
     ))
   }
