@@ -51,21 +51,24 @@ sealed class CState(val s: String) {
 }
 
 sealed class CDatum(val ty: String) {
-  // data class Tr(val tr: CTransition): CDatum("Tr")
   data class Re(val re: CStackReplace): CDatum("Re")
   data class R2(val r2: CStackReplace2): CDatum("R2")
   data class Ad(val ad: CStackAdd): CDatum("Ad")
   object CChomp: CDatum("Ch")
+  data class Em(val em: CEmit): CDatum("Em")
+  data class Er(val er: CError): CDatum("Er")
 }
 
 data class CDatas(val stuff: List<CDatum>) {
   companion object {
     fun of(vararg args: Any) = args.mapNotNull { it ->
       when(it) {
-        is CStackReplace  -> CDatum.Re(it)
-        is CStackReplace2 -> CDatum.R2(it)
-        is CStackAdd -> CDatum.Ad(it)
-        is CDatum.CChomp  -> it
+        is CStackReplace   -> CDatum.Re(it)
+        is CStackReplace2  -> CDatum.R2(it)
+        is CStackAdd       -> CDatum.Ad(it)
+        is CDatum.CChomp   -> it
+        is CEmit           -> CDatum.Em(it)
+        is CError          -> CDatum.Er(it)
         else -> null
       }
     }.let { CDatas(it) }
@@ -87,17 +90,18 @@ fun CChomp() = CDatum.CChomp
 data class CEmit(val c: CongealedToken) {
   constructor(s: String) : this(CongealedToken(s))
 }
+data class CError(val state: CState, val curr: Token)
   
-fun computeActionDatas(statePeek: CState, statePeek2: CState?, curr: Token, nxt1: Token?): CDatas {
+fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState?): CDatas {
   return when (statePeek.s) {
     "ROOT" -> {
       CDatas.of(CStackReplace("EXPR", "ROOT_CLOSE"))
     }
     "ROOT_CLOSE" -> {
       if (curr.type == TokenType.EOF) {
-        CDatas.of(CChomp(), CStackPop(), CEmit("ROOT_1"))
+        CDatas.of(CStackPop(), CEmit("ROOT_1"), CChomp())
       } else {
-        TODO("error")
+        CDatas.of(CError(statePeek, curr))
       }
     }
     "EXPR" -> {
@@ -111,7 +115,7 @@ fun computeActionDatas(statePeek: CState, statePeek2: CState?, curr: Token, nxt1
     }
     "ADD_MORE" -> {
       if (curr.type == TokenType.PLUS) {
-        CDatas.of(CChomp(), CStackReplace("MULT", "ADD_END", "ADD_MORE"))
+        CDatas.of(CStackReplace("MULT", "ADD_END", "ADD_MORE"), CChomp())
       } else {
         CDatas.of(CStackPop())
       }
@@ -124,7 +128,7 @@ fun computeActionDatas(statePeek: CState, statePeek2: CState?, curr: Token, nxt1
     }
     "MULT_MORE" -> {
       if (curr.type == TokenType.STAR) {
-        CDatas.of(CChomp(), CStackReplace("UNARY", "MULT_END", "MULT_MORE"))
+        CDatas.of(CStackReplace("UNARY", "MULT_END", "MULT_MORE"), CChomp())
       } else {
         CDatas.of(CStackPop())
       }
@@ -134,7 +138,7 @@ fun computeActionDatas(statePeek: CState, statePeek2: CState?, curr: Token, nxt1
     }
     "UNARY" -> {
       if (curr.type == TokenType.MINUS) {
-        CDatas.of(CChomp(), CStackReplace("UNARY", "UNARY_END"))
+        CDatas.of(CStackReplace("UNARY", "UNARY_END"), CChomp())
       } else {
         CDatas.of(CStackReplace("GROUP"))
       }
@@ -144,16 +148,16 @@ fun computeActionDatas(statePeek: CState, statePeek2: CState?, curr: Token, nxt1
     }
     "GROUP" -> {
       if (curr.type == TokenType.LEFT_PAREN) {
-        CDatas.of(CChomp(), CStackReplace("EXPR", "GROUP_CLOSE"))
+        CDatas.of(CStackReplace("EXPR", "GROUP_CLOSE"), CChomp())
       } else {
         CDatas.of(CStackReplace("LITERAL"))
       }
     }
     "GROUP_CLOSE" -> {
       if (curr.type == TokenType.RIGHT_PAREN) {
-        CDatas.of(CChomp(), CStackReplace("GROUP_END"))
+        CDatas.of(CStackReplace("GROUP_END"), CChomp())
       } else {
-        TODO("error")
+        CDatas.of(CError(statePeek, curr))
       }
     }
     "GROUP_END" -> {
@@ -161,12 +165,14 @@ fun computeActionDatas(statePeek: CState, statePeek2: CState?, curr: Token, nxt1
     }
     "LITERAL" -> {
       if (curr.type == TokenType.NUMBER) {
-        CDatas.of(CChomp(), CStackPop(), CEmit("LITERAL_1"))
+        CDatas.of(CStackPop(), CEmit("LITERAL_1"), CChomp())
       } else {
-        TODO("error")
+        CDatas.of(CError(statePeek, curr))
       }
     }
-    else -> TODO("should never happen")
+    else -> {
+      CDatas.of(CError(statePeek, curr))
+    }
   }
 }
 
