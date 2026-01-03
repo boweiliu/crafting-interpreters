@@ -81,5 +81,35 @@ class ComputeActionDatasTest {
       todos.map { it.s }.shouldBe(listOf("EXPR", "ROOT_CLOSE"))
     }
   }
+
+  fun simulate(
+    toks: List<Token>,
+    stateStack: ArrayDeque<CState> = ArrayDeque(listOf(CState.Ss("ROOT"))),
+  ): List<Any?> {
+    val tokens: MutableList<Token> = toks.toMutableList()
+    var curr: Token = tokens.removeFirst()
+    var acc: MutableList<Any?> = mutableListOf()
+    while(true) {
+      val peekState = stateStack.lastOrNull() ?: break
+      val (actions, ) = computeActionDatas(peekState, curr)
+      actions.forEach {
+        when(it) {
+          is CDatum.Re -> {
+            stateStack.pop()
+            it.re.todos.reversed().forEach { stateStack.push(it) }
+          }
+          is CDatum.CChomp -> { curr = tokens.removeFirst() }
+          is CDatum.Em -> acc.add(it.em.cToken)
+          else -> { }
+        }
+      }
+    }
+    return acc.toList()
+  }
+
+  @Test
+  fun itSimulatesForLiteral() {
+    simulate(Token.TTL(TokenType.MINUS, TokenType.NUMBER))
+  }
 }
   
