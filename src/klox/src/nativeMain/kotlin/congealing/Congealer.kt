@@ -25,24 +25,30 @@ fun runCongealer(
   var myState: Any? = null
 
   @Suppress("UNCHECKED_CAST")
-  val input_seq = (inputTokens.peekAhead3().dropLast() as Sequence<Triple<Token, Token?, Token?>>)
+  // val input_seq = (inputTokens.peekAhead3().dropLast() as Sequence<Triple<Token, Token?, Token?>>)
 
-  val outputTokens: Sequence<CongealedToken> = input_seq
+  val outputTokens: Sequence<Sequence<CongealedToken>> = inputTokens.peekAhead3()
     .mapDuoSequence {
-      val stateStack: MutableList<String> = mutableListOf("ROOT")
-      var buffer: MutableList<String> = mutableListOf()
-      var result: CongealedToken? = null
+      val stateStack: ArrayDeque<CState> = ArrayDeque(listOf(CState.Ss("ROOT")))
+      var results: MutableList<CongealedToken>? = null
 
-      var (curr, nxt1, nxt2) = result ?.let { duoYield(it) }
-        ?: initCoYield()
+      while (true) {
+        var (curr, nxt1, nxt2) = results ?.let { duoYield(it.asSequence()) }
+          ?: initCoYield().also { results = mutableListOf() }
+        if (curr == null) break
 
-      stateStack.add("ADD")
-      while (false) {
-        val topState = stateStack.lastOrNull()!!
+        val (actions, ) = computeActionDatas(stateStack.lastOrNull()!!, curr)
+        actions.forEach {
+          when(it) {
+	    is CDatum.Em -> {
+            }
+	    else -> { }
+          }
+        }
       }
-      result!!
+      results!!.asSequence()
     }
-  return Pair(outputTokens, errsAcc.toList<InterpreterError>())
+  return Pair(outputTokens.flatten(), errsAcc.toList<InterpreterError>())
 }
 
 sealed class CState(val s: String) {
@@ -94,7 +100,7 @@ data class CEmit(val c: CongealedToken) {
 }
 data class CError(val state: CState, val curr: Token, val expectedToken: TokenType? = null)
 data class CMatchFail(val tokenType: TokenType)
-  
+
 fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = null): CDatas {
   return when (statePeek.s) {
     "ROOT" -> {

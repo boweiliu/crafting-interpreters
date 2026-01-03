@@ -44,7 +44,6 @@ fun testRunLexerEmitsTokens() {
 
 
 @Test
-@Ignore
 fun testRunAllJustRuns() {
   val (_, errorsSoFar) = runAll("1 + 2")
   errorsSoFar.shouldHaveSize(0)
