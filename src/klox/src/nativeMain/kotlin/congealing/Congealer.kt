@@ -75,7 +75,7 @@ fun runCongealer(
 	      results.add(it.em.cToken)
 	    }
 	    is CDatum.Er -> {
-	      TODO("give more info about the error")
+	      TODO("give more info about the error $it")
             }
 	    is CDatum.Mf -> {
 	      // ignore for now, only useful when errors show up
@@ -130,9 +130,11 @@ data class CEmit(val cToken: CongealedToken) {
   constructor(s: String, n: Int) : this(CongealedToken.ParsingToken(s, n))
 }
 // Error while parsing
-data class CError(val state: CState, val curr: Token, val expectedToken: TokenType? = null)
+data class CError(val state: CState, val curr: Token, val expectedToken: Set<TokenType> = setOf())
 // Data while parsing to help with error messaging ability
-data class CMatchFail(val tokenType: TokenType)
+data class CMatchFail(val expectedToken: Set<TokenType> = setOf()) {
+  constructor(expectedToken: TokenType) : this(setOf(expectedToken))
+}
 
 // When we CChomp a token, it's not always true we need another token immediately
 fun CState.doesNeedToken(): Boolean = !(this.s.endsWith("_END"))
@@ -140,6 +142,9 @@ fun CState.doesNeedToken(): Boolean = !(this.s.endsWith("_END"))
 // TODO: it looks like this could be replaced with a big lookup dictionary
 // TODO: autogenerate this based on EBNF
 fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = null): CDatas {
+
+  val tokenTypeMatchSet = Token.PRECEDENCE_SET[statePeek.s]
+
   return when (statePeek.s) {
     "ROOT" -> {
       CDatas.of(CStackReplace("EXPR", "ROOT_CLOSE"))
@@ -148,7 +153,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       if (curr.type == TokenType.EOF) {
         CDatas.of(CStackReplace("ROOT_END"), CChomp())
       } else {
-        CDatas.of(CError(statePeek, curr, TokenType.EOF))
+        CDatas.of(CError(statePeek, curr, setOf(TokenType.EOF)))
       }
     }
     "ROOT_END" -> {
@@ -161,10 +166,10 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       CDatas.of(CStackReplace("MULT", "ADD_MORE"))
     }
     "ADD_MORE" -> {
-      if (curr.type == TokenType.PLUS || curr.type == TokenType.MINUS) {
+      if (curr.type in tokenTypeMatchSet!!) {
         CDatas.of(CStackReplace("MULT", "ADD_END", "ADD_MORE"), CChomp())
       } else {
-        CDatas.of(CStackPop())
+        CDatas.of(CStackPop(), CMatchFail(tokenTypeMatchSet))
       }
     }
     "ADD_END" -> {
@@ -174,20 +179,20 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       CDatas.of(CStackReplace("UNARY", "MULT_MORE"))
     }
     "MULT_MORE" -> {
-      if (curr.type == TokenType.STAR || curr.type == TokenType.SLASH || curr.type == TokenType.PERCENT) {
+      if (curr.type in tokenTypeMatchSet!!) {
         CDatas.of(CStackReplace("UNARY", "MULT_END", "MULT_MORE"), CChomp())
       } else {
-        CDatas.of(CStackPop(), CMatchFail(TokenType.STAR))
+        CDatas.of(CStackPop(), CMatchFail(tokenTypeMatchSet))
       }
     }
     "MULT_END" -> {
       CDatas.of(CStackPop(), CEmit("MULT", 3))
     }
     "UNARY" -> {
-      if (curr.type == TokenType.MINUS) {
+      if (curr.type in tokenTypeMatchSet!!) {
         CDatas.of(CStackReplace("UNARY", "UNARY_END"), CChomp())
       } else {
-        CDatas.of(CStackReplace("GROUP"), CMatchFail(TokenType.MINUS))
+        CDatas.of(CStackReplace("GROUP"), CMatchFail(tokenTypeMatchSet))
       }
     }
     "UNARY_END" -> {
@@ -204,21 +209,17 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       if (curr.type == TokenType.RIGHT_PAREN) {
         CDatas.of(CStackReplace("GROUP_END"), CChomp())
       } else {
-        CDatas.of(CError(statePeek, curr, TokenType.RIGHT_PAREN))
+        CDatas.of(CError(statePeek, curr, setOf(TokenType.RIGHT_PAREN)))
       }
     }
     "GROUP_END" -> {
       CDatas.of(CStackPop(), CEmit("GROUP", 3))
     }
     "LITERAL" -> {
-      if (curr.type == TokenType.NUMBER ||
-          curr.type == TokenType.TRUE ||
-          curr.type == TokenType.FALSE ||
-          curr.type == TokenType.STRING ||
-          curr.type == TokenType.NIL) {
+      if (curr.type in tokenTypeMatchSet!!) {
         CDatas.of(CStackReplace("LITERAL_END"), CChomp())
       } else {
-        CDatas.of(CError(statePeek, curr, TokenType.NUMBER))
+        CDatas.of(CError(statePeek, curr, tokenTypeMatchSet))
       }
     }
     "LITERAL_END" -> {
@@ -229,3 +230,14 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     }
   }
 }
+
+val Token.Companion.PRECEDENCE_SET: Map<String, Set<TokenType>> get() = mapOf(
+  "LITERAL" to TokenTypeSet(
+    TokenType.NUMBER, TokenType.TRUE, TokenType.FALSE, TokenType.STRING, TokenType.NIL),
+  "MULT_MORE" to TokenTypeSet(
+    TokenType.STAR, TokenType.SLASH, TokenType.PERCENT),
+  "ADD_MORE" to TokenTypeSet(
+    TokenType.PLUS, TokenType.MINUS),
+  "UNARY" to TokenTypeSet(
+    TokenType.MINUS, TokenType.BANG, TokenType.NOT),
+)

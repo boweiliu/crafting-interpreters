@@ -42,10 +42,22 @@ fun testRunLexerEmitsTokens() {
 }
 
 
+class IntegrationTest {
+  @Test
+  fun testRunAllJustRuns() {
+    val (_, errorsSoFar) = runAll("")
+    errorsSoFar.shouldHaveSize(0)
+  }
 
-@Test
-fun testRunAllJustRuns() {
-  val (_, errorsSoFar) = runAll("1 + 2")
-  errorsSoFar.shouldHaveSize(0)
+  @Test
+  fun testRunAllRunsOnAddingNumbers() {
+    val (_, errorsSoFar) = runAll("1 + 2")
+    errorsSoFar.shouldHaveSize(0)
+  }
+
+  @Test
+  fun testRunAllRunsOnBooleans() {
+    val (_, errorsSoFar) = runAll("true and not false")
+    errorsSoFar.shouldHaveSize(0)
+  }
 }
-

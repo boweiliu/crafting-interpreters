@@ -170,3 +170,5 @@ fun TokenType.toLiteralValOrNull() =
     else -> null
   }
 
+fun TokenTypeSet(vararg args: TokenType) = args.toSet()
+
