@@ -69,12 +69,13 @@ enum class TokenType {
   EOF, // done
 }
 
-sealed interface LiteralVal {
-  data class StringVal(val v: String): LiteralVal
-  data class IntVal(val v: Int): LiteralVal
-  data class DoubleVal(val v: Double): LiteralVal
-  data class BooleanVal(val v: Boolean): LiteralVal
-  object NullVal: LiteralVal
+sealed class LiteralVal(val typ: String) {
+  data class StringVal(val v: String): LiteralVal("str")
+  data class IntVal(val v: Int): LiteralVal("int")
+  data class DoubleVal(val v: Double): LiteralVal("double")
+  data class BooleanVal(val v: Boolean): LiteralVal("bool")
+  object NullVal: LiteralVal("null")
+
   val vl get(): Any? {
     return when(this) {
       is StringVal -> this.v
@@ -99,6 +100,14 @@ sealed interface LiteralVal {
     else -> null
   }
   fun toDouble(): Double = this.toDoubleOrNull()!!
+
+  fun isBoolable(): Boolean = (this is BooleanVal || this is NullVal)
+  fun toBooleanOrNull(): Boolean? = when (this) {
+    is BooleanVal -> this.v
+    is NullVal -> false
+    else -> null
+  }
+  fun toBoolean(): Boolean = this.toBooleanOrNull()!!
 }
 
 val Token.Companion.LOOKUP_1CH_TO_TOKEN: Map<Char, TokenType>

@@ -182,6 +182,67 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     "EXPR" -> {
       CDatas.of(CStackReplace(nextHighestPrecedence!!))
     }
+
+    // we expect a higher-precedence term followed by left-associating additions
+    "OROR" -> {
+      CDatas.of(CStackReplace(nextHighestPrecedence!!, "OROR_MORE"))
+    }
+    "OROR_MORE" -> {
+      if (curr.type in tokenTypeMatchSet!!) {
+        CDatas.of(CStackReplace(nextHighestPrecedence!!, "OROR_END", "OROR_MORE"), CChomp())
+      } else {
+        CDatas.of(CStackPop(), CMatchFail(tokenTypeMatchSet))
+      }
+    }
+    "OROR_END" -> {
+      CDatas.of(CStackPop(), CEmit("OROR", 3))
+    }
+
+    // we expect a higher-precedence term followed by left-associating additions
+    "ANDAND" -> {
+      CDatas.of(CStackReplace(nextHighestPrecedence!!, "ANDAND_MORE"))
+    }
+    "ANDAND_MORE" -> {
+      if (curr.type in tokenTypeMatchSet!!) {
+        CDatas.of(CStackReplace(nextHighestPrecedence!!, "ANDAND_END", "ANDAND_MORE"), CChomp())
+      } else {
+        CDatas.of(CStackPop(), CMatchFail(tokenTypeMatchSet))
+      }
+    }
+    "ANDAND_END" -> {
+      CDatas.of(CStackPop(), CEmit("ANDAND", 3))
+    }
+
+    // we expect a higher-precedence term followed by left-associating additions
+    "EQUALITY" -> {
+      CDatas.of(CStackReplace(nextHighestPrecedence!!, "EQUALITY_MORE"))
+    }
+    "EQUALITY_MORE" -> {
+      if (curr.type in tokenTypeMatchSet!!) {
+        CDatas.of(CStackReplace(nextHighestPrecedence!!, "EQUALITY_END", "EQUALITY_MORE"), CChomp())
+      } else {
+        CDatas.of(CStackPop(), CMatchFail(tokenTypeMatchSet))
+      }
+    }
+    "EQUALITY_END" -> {
+      CDatas.of(CStackPop(), CEmit("EQUALITY", 3))
+    }
+
+    // we expect a higher-precedence term followed by left-associating additions
+    "COMPARE" -> {
+      CDatas.of(CStackReplace(nextHighestPrecedence!!, "COMPARE_MORE"))
+    }
+    "COMPARE_MORE" -> {
+      if (curr.type in tokenTypeMatchSet!!) {
+        CDatas.of(CStackReplace(nextHighestPrecedence!!, "COMPARE_END", "COMPARE_MORE"), CChomp())
+      } else {
+        CDatas.of(CStackPop(), CMatchFail(tokenTypeMatchSet))
+      }
+    }
+    "COMPARE_END" -> {
+      CDatas.of(CStackPop(), CEmit("COMPARE", 3))
+    }
+
     // ADD : MULT ADD_MORE
     // we expect a higher-precedence term followed by left-associating additions
     "ADD" -> {
@@ -197,6 +258,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     "ADD_END" -> {
       CDatas.of(CStackPop(), CEmit("ADD", 3))
     }
+
     // MULT : UNARY MULT_MORE
     // we expect a higher-precedence term followed by left-associating additions
     "MULT" -> {
@@ -212,6 +274,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     "MULT_END" -> {
       CDatas.of(CStackPop(), CEmit("MULT", 3))
     }
+
     // UNARY : UNARY GROUP | GROUP
     // either we have one or more symbols, or a higher-precedence term
     "UNARY" -> {
@@ -284,8 +347,8 @@ fun <T> List<T>.toChain() : Map<T, T> =
   else this.dropLast(1).mapIndexed { idx, el -> Pair(el, this[idx + 1]) }.toMap()
 
 val Token.Companion.PRECEDENCE_CHAIN: Map<String, Map<String, String>> get() = mapOf(
-  // "EXPR" to listOf("EXPR", "OROR", "ANDAND", "EQUALITY", "COMPARE", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
-  "EXPR" to listOf("EXPR", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
+  "EXPR" to listOf("EXPR", "OROR", "ANDAND", "EQUALITY", "COMPARE", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
+  // "EXPR" to listOf("EXPR", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
 )
 
 val Token.Companion.LOOKUP_OP_TO_ARITY_TYPE: Map<String, String> get() = mapOf(

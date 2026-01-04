@@ -76,12 +76,64 @@ val FN3_IMPL_LOOKUP: Map<TokenType, (LiteralVal, LiteralVal) -> LiteralVal> = ma
     else if (a.isNumeric() && b.isNumeric()) LiteralVal.DoubleVal(a.toDouble() % b.toDouble())
     else TODO("types")
   }),
+  TokenType.LESS_THAN to (fun(a: LiteralVal, b: LiteralVal): LiteralVal {
+    return if (a is LiteralVal.IntVal && b is LiteralVal.IntVal) LiteralVal.BooleanVal(a.v < b.v)
+    else if (a.isNumeric() && b.isNumeric()) LiteralVal.BooleanVal(a.toDouble() < b.toDouble())
+    else if (a is LiteralVal.StringVal && b is LiteralVal.StringVal) LiteralVal.BooleanVal(a.v < b.v)
+    else TODO("types")
+  }),
+  TokenType.LESS_THAN_EQUAL to (fun(a: LiteralVal, b: LiteralVal): LiteralVal {
+    return if (a is LiteralVal.IntVal && b is LiteralVal.IntVal) LiteralVal.BooleanVal(a.v <= b.v)
+    else if (a.isNumeric() && b.isNumeric()) LiteralVal.BooleanVal(a.toDouble() <= b.toDouble())
+    else if (a is LiteralVal.StringVal && b is LiteralVal.StringVal) LiteralVal.BooleanVal(a.v <= b.v)
+    else TODO("types")
+  }),
+  TokenType.GREATER_THAN to (fun(a: LiteralVal, b: LiteralVal): LiteralVal {
+    return if (a is LiteralVal.IntVal && b is LiteralVal.IntVal) LiteralVal.BooleanVal(a.v > b.v)
+    else if (a.isNumeric() && b.isNumeric()) LiteralVal.BooleanVal(a.toDouble() > b.toDouble())
+    else if (a is LiteralVal.StringVal && b is LiteralVal.StringVal) LiteralVal.BooleanVal(a.v > b.v)
+    else TODO("types")
+  }),
+  TokenType.GREATER_THAN_EQUAL to (fun(a: LiteralVal, b: LiteralVal): LiteralVal {
+    return if (a is LiteralVal.IntVal && b is LiteralVal.IntVal) LiteralVal.BooleanVal(a.v >= b.v)
+    else if (a.isNumeric() && b.isNumeric()) LiteralVal.BooleanVal(a.toDouble() >= b.toDouble())
+    else if (a is LiteralVal.StringVal && b is LiteralVal.StringVal) LiteralVal.BooleanVal(a.v >= b.v)
+    else TODO("types")
+  }),
+  TokenType.EQUAL_EQUAL to (fun(a: LiteralVal, b: LiteralVal): LiteralVal {
+    return if (a.typ == b.typ) LiteralVal.BooleanVal(a.vl == b.vl)
+    else if (a.isNumeric() && b.isNumeric()) LiteralVal.BooleanVal(a.toDouble() == b.toDouble())
+    else TODO("types")
+  }),
+  TokenType.BANG_EQUAL to (fun(a: LiteralVal, b: LiteralVal): LiteralVal {
+    return if (a.typ == b.typ) LiteralVal.BooleanVal(a.vl != b.vl)
+    else if (a.isNumeric() && b.isNumeric()) LiteralVal.BooleanVal(a.toDouble() != b.toDouble())
+    else TODO("types")
+  }),
+  TokenType.AND to (fun(a: LiteralVal, b: LiteralVal): LiteralVal {
+    return if (a is LiteralVal.BooleanVal && b is LiteralVal.BooleanVal) LiteralVal.BooleanVal(a.v  && b.v)
+    else if (a.isBoolable() && b.isBoolable()) LiteralVal.BooleanVal(a.toBoolean() && b.toBoolean())
+    else TODO("types")
+  }),
+  TokenType.OR to (fun(a: LiteralVal, b: LiteralVal): LiteralVal {
+    return if (a is LiteralVal.BooleanVal && b is LiteralVal.BooleanVal) LiteralVal.BooleanVal(a.v  || b.v)
+    else if (a.isBoolable() && b.isBoolable()) LiteralVal.BooleanVal(a.toBoolean() || b.toBoolean())
+    else TODO("types")
+  }),
 )
 
 val FN2_IMPL_LOOKUP: Map<TokenType, (LiteralVal) -> LiteralVal> = mapOf(
   TokenType.MINUS to (fun(a: LiteralVal): LiteralVal {
     return if (a is LiteralVal.IntVal) LiteralVal.IntVal(-a.v)
     else if (a is LiteralVal.DoubleVal) LiteralVal.DoubleVal(-a.v)
+    else TODO("types")
+  }),
+  TokenType.NOT to (fun(a: LiteralVal): LiteralVal {
+    return if (a is LiteralVal.BooleanVal) LiteralVal.BooleanVal(!(a.v))
+    else TODO("types")
+  }),
+  TokenType.BANG to (fun(a: LiteralVal): LiteralVal {
+    return if (a is LiteralVal.BooleanVal) LiteralVal.BooleanVal(!(a.v))
     else TODO("types")
   }),
   TokenType.EOF to (fun(a: LiteralVal): LiteralVal = a),
