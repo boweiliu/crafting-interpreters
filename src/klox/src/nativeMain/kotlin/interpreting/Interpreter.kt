@@ -31,7 +31,7 @@ fun runInterpreter(
             val result = op_fn.invoke(tgt)
             dataStack.push(result)
           }
-          "ROOT_BODY" -> dataStack.push(argsN[0] as LiteralVal)
+          "ROOTBODY" -> dataStack.push(argsN[0] as LiteralVal)
           "ROOT" -> { /* no-op */ } 
           "GROUP" -> dataStack.push(argsN[1] as LiteralVal)
           else -> TODO("hmm $opType")

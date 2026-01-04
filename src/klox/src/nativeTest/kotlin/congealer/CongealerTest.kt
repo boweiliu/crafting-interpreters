@@ -104,12 +104,12 @@ class ComputeActionDatasTest {
 
   @Test
   fun itReturnsModificationsForROOT() {
-    val result = computeActionDatas(CState.Ss("ROOT_BODY"), Token.TT(TokenType.NUMBER))
+    val result = computeActionDatas(CState.Ss("ROOTBODY"), Token.TT(TokenType.NUMBER))
     result.stuff.shouldHaveSize(1)
     result.stuff.map { it.ty }.shouldBe(listOf("Re"))
     result.stuff[0].let { it as CDatum.Re }.re.todos.let { todos -> 
       todos.shouldHaveSize(2)
-      todos.map { it.s }.shouldBe(listOf("EXPR", "ROOT_BODY_CLOSE"))
+      todos.map { it.s }.shouldBe(listOf("EXPR", "ROOTBODY_CLOSE"))
     }
   }
 

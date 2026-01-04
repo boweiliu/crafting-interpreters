@@ -144,12 +144,12 @@ fun CState.doesNeedToken(): Boolean = !(this.s.endsWith("_END"))
 fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = null): CDatas {
 
   val state = statePeek.s
-  val baseState = state.split("_")[0]
-  val tokenTypeMatchSet = Token.PRECEDENCE_TO_SYMBOL_SET[state]
+  val baseState = state.split("_")[0] // TODO: not strictly true whoops
+  val tokenTypeMatchSet = Token.PRECEDENCE_TO_SYMBOL_SET[baseState]
   val nextHighestPrecedence = Token.PRECEDENCE_CHAIN["EXPR"]!![baseState]
 
   return when (statePeek.s) {
-    // ROOT : ROOT_CLOSE | ROOT_BODY
+    // ROOT : ROOT_CLOSE | ROOTBODY
     // (either we expect an immediate EOF or something else)
     "ROOT" -> {
       CDatas.of(CStackReplace("ROOT_CLOSE"))
@@ -158,26 +158,26 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       if (curr.type == TokenType.EOF) {
         CDatas.of(CStackReplace("ROOT_END"), CChomp())
       } else {
-        CDatas.of(CStackReplace("ROOT_BODY"), CMatchFail(TokenType.EOF))
+        CDatas.of(CStackReplace("ROOTBODY"), CMatchFail(TokenType.EOF))
       }
     }
     "ROOT_END" -> {
       CDatas.of(CStackPop(), CEmit("ROOT", 1))
     }
-    // ROOT_BODY : EXPR ROOT_BODY_CLOSE
+    // ROOTBODY : EXPR ROOTBODY_CLOSE
     // we expect an EXPR followed by an EOF
-    "ROOT_BODY" -> {
-      CDatas.of(CStackReplace("EXPR", "ROOT_BODY_CLOSE"))
+    "ROOTBODY" -> {
+      CDatas.of(CStackReplace("EXPR", "ROOTBODY_CLOSE"))
     }
-    "ROOT_BODY_CLOSE" -> {
+    "ROOTBODY_CLOSE" -> {
       if (curr.type == TokenType.EOF) {
-        CDatas.of(CStackReplace("ROOT_BODY_END"), CChomp())
+        CDatas.of(CStackReplace("ROOTBODY_END"), CChomp())
       } else {
         CDatas.of(CError(statePeek, curr, setOf(TokenType.EOF)))
       }
     }
-    "ROOT_BODY_END" -> {
-      CDatas.of(CStackPop(), CEmit("ROOT_BODY", 2))
+    "ROOTBODY_END" -> {
+      CDatas.of(CStackPop(), CEmit("ROOTBODY", 2))
     }
     "EXPR" -> {
       CDatas.of(CStackReplace(nextHighestPrecedence!!))
@@ -263,9 +263,9 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
 val Token.Companion.PRECEDENCE_TO_SYMBOL_SET: Map<String, Set<TokenType>> get() = mapOf(
   "LITERAL" to TokenTypeSet(
     TokenType.NUMBER, TokenType.TRUE, TokenType.FALSE, TokenType.STRING, TokenType.NIL),
-  "MULT_MORE" to TokenTypeSet(
+  "MULT" to TokenTypeSet(
     TokenType.STAR, TokenType.SLASH, TokenType.PERCENT),
-  "ADD_MORE" to TokenTypeSet(
+  "ADD" to TokenTypeSet(
     TokenType.PLUS, TokenType.MINUS),
   "UNARY" to TokenTypeSet(
     TokenType.MINUS, TokenType.BANG, TokenType.NOT),
@@ -276,6 +276,7 @@ fun <T> List<T>.toChain() : Map<T, T> =
   else this.dropLast(1).mapIndexed { idx, el -> Pair(el, this[idx + 1]) }.toMap()
 
 val Token.Companion.PRECEDENCE_CHAIN: Map<String, Map<String, String>> get() = mapOf(
+  // "EXPR" to listOf("EXPR", "OROR", "ANDAND", "EQUALITY", "COMPARE", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
   "EXPR" to listOf("EXPR", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
 )
     
