@@ -147,7 +147,17 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
 
   return when (statePeek.s) {
     "ROOT" -> {
-      CDatas.of(CStackReplace("EXPR", "ROOT_CLOSE"))
+      CDatas.of(CStackReplace("MAYBE_ROOT0_CLOSE"))
+    }
+    "MAYBE_ROOT0_CLOSE" -> {
+      if (curr.type == TokenType.EOF) {
+        CDatas.of(CStackReplace("ROOT0_END"), CChomp())
+      } else {
+        CDatas.of(CStackReplace("EXPR", "ROOT_CLOSE"), CMatchFail(TokenType.EOF))
+      }
+    }
+    "ROOT0_END" -> {
+      CDatas.of(CStackPop(), CEmit("ROOT0", 1))
     }
     "ROOT_CLOSE" -> {
       if (curr.type == TokenType.EOF) {

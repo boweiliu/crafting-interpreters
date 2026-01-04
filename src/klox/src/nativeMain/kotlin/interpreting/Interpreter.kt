@@ -32,13 +32,14 @@ fun runInterpreter(
             dataStack.push(result)
           }
           "ROOT" -> dataStack.push(argsN[0] as LiteralVal)
+          "ROOT0" -> { /* no-op */ } 
           "GROUP" -> dataStack.push(argsN[1] as LiteralVal)
           else -> TODO("hmm $opType")
         }
       }
     }
   }
-  println(dataStack.lastOrNull().let { (it as LiteralVal).repr() })
+  println(dataStack.lastOrNull()?.let { (it as LiteralVal).repr() })
 }
 
 val FN3_IMPL_LOOKUP: Map<TokenType, (LiteralVal, LiteralVal) -> LiteralVal> = mapOf(
