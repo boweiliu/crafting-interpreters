@@ -269,6 +269,14 @@ val Token.Companion.PRECEDENCE_TO_SYMBOL_SET: Map<String, Set<TokenType>> get() 
     TokenType.PLUS, TokenType.MINUS),
   "UNARY" to TokenTypeSet(
     TokenType.MINUS, TokenType.BANG, TokenType.NOT),
+  "COMPARE" to TokenTypeSet(
+    TokenType.LESS_THAN, TokenType.LESS_THAN_EQUAL, TokenType.GREATER_THAN, TokenType.GREATER_THAN_EQUAL),
+  "EQUALITY" to TokenTypeSet(
+    TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL),
+  "ANDAND" to TokenTypeSet(
+    TokenType.AND),
+  "OROR" to TokenTypeSet(
+    TokenType.OR),
 )
 
 fun <T> List<T>.toChain() : Map<T, T> =
@@ -279,4 +287,17 @@ val Token.Companion.PRECEDENCE_CHAIN: Map<String, Map<String, String>> get() = m
   // "EXPR" to listOf("EXPR", "OROR", "ANDAND", "EQUALITY", "COMPARE", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
   "EXPR" to listOf("EXPR", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
 )
-    
+
+val Token.Companion.LOOKUP_OP_TO_ARITY_TYPE: Map<String, String> get() = mapOf(
+  "ROOTBODY" to "x A",
+  "OROR"     to "x A x",
+  "ANDAND"   to "x A x",
+  "EQUALITY" to "x A x",
+  "COMPARE"  to "x A x",
+  "ADD"      to "x A x",
+  "MULT"     to "x A x",
+  "UNARY"    to "A x",
+  "GROUP"    to "A x A",
+  "LITERAL"  to "x",
+  "ROOT"     to "",
+)

@@ -16,24 +16,30 @@ fun runInterpreter(
         val arity = tok.arity
         val argsN: List<Any?> = dataStack.pop(arity)// .map { it as Token }
         val opType = tok.ss
-        when (opType) {
-          "LITERAL" -> dataStack.push((argsN[0] as Token).literal)
-          "ADD", "MULT" -> {
+        val arityType = Token.LOOKUP_OP_TO_ARITY_TYPE[opType]
+        when (arityType) {
+          "x" -> dataStack.push((argsN[0] as Token).literal) // "LITERAL"
+          "x A x" -> {
             val left = argsN[0] as LiteralVal
             val right = argsN[2] as LiteralVal
             val op_fn = (argsN[1] as Token).type.let { FN3_IMPL_LOOKUP.get(it) ?: TODO("impl $it") }
             val result = op_fn.invoke(left, right) 
             dataStack.push(result)
           }
-          "UNARY" -> {
+          "A x A" -> dataStack.push(argsN[1] as LiteralVal) // "GROUP"
+          "A x" -> {
             val tgt = argsN[1] as LiteralVal
             val op_fn = (argsN[0] as Token).type.let { FN2_IMPL_LOOKUP.get(it) ?: TODO("impl $it") }
             val result = op_fn.invoke(tgt)
             dataStack.push(result)
           }
-          "ROOTBODY" -> dataStack.push(argsN[0] as LiteralVal)
-          "ROOT" -> { /* no-op */ } 
-          "GROUP" -> dataStack.push(argsN[1] as LiteralVal)
+          "x A" -> {
+            val tgt = argsN[0] as LiteralVal
+            val op_fn = (argsN[1] as Token).type.let { FN2_IMPL_LOOKUP.get(it) ?: TODO("impl $it") }
+            val result = op_fn.invoke(tgt)
+            dataStack.push(result)
+          }
+          "" -> { /* no-op */ }  // "ROOT"
           else -> TODO("hmm $opType")
         }
       }
@@ -78,4 +84,5 @@ val FN2_IMPL_LOOKUP: Map<TokenType, (LiteralVal) -> LiteralVal> = mapOf(
     else if (a is LiteralVal.DoubleVal) LiteralVal.DoubleVal(-a.v)
     else TODO("types")
   }),
+  TokenType.EOF to (fun(a: LiteralVal): LiteralVal = a),
 )
