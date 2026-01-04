@@ -108,6 +108,15 @@ class computeForTransitionTest {
     )
     result.shouldBe(LTriple(LToken(TokenType.STRING, "\"hello\"", LiteralVal.StringVal("hello"))))
   }
+
+  @Test
+  fun itMakesNamedLiteral() {
+    val result = computeForTransition(
+      oldStateData = LexerStateData(LexerState.ALPHA, StringBuilder("nil")),
+      toState = LexerState.DEFAULT,
+    )
+    result.shouldBe(LTriple(LToken(TokenType.NIL, "nil", LiteralVal.NullVal)))
+  }
 }
 
 

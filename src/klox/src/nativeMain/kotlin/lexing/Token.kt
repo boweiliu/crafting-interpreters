@@ -162,11 +162,11 @@ val Token.Companion.LOOKUP_ALPHA_TO_TOKEN: Map<String, TokenType>
     "SUPER" to TokenType.SUPER,
   )
 
-fun TokenType.toLiteralValOrNull() {
+fun TokenType.toLiteralValOrNull() =
   when (this) {
     TokenType.TRUE -> LiteralVal.BooleanVal(true)
     TokenType.FALSE -> LiteralVal.BooleanVal(false)
     TokenType.NIL -> LiteralVal.NullVal
     else -> null
   }
-}
+

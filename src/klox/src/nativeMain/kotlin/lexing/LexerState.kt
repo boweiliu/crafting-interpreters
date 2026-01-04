@@ -166,7 +166,7 @@ fun computeForTransition(
     LexerState.ALPHA -> {
       val lexeme = oldStateData.builder.toString()
       Token.LOOKUP_ALPHA_TO_TOKEN.get(lexeme.uppercase())?.let { type ->
-        LTriple(LToken(type, oldStateData.builder.toString()))
+        LTriple(LToken(type, oldStateData.builder.toString(), type.toLiteralValOrNull()))
       } ?: 
         LTriple(LToken(TokenType.IDENTIFIER, oldStateData.builder.toString()))
     }
