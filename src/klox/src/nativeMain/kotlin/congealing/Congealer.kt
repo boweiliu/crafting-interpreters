@@ -348,7 +348,6 @@ fun <T> List<T>.toChain() : Map<T, T> =
 
 val Token.Companion.PRECEDENCE_CHAIN: Map<String, Map<String, String>> get() = mapOf(
   "EXPR" to listOf("EXPR", "OROR", "ANDAND", "EQUALITY", "COMPARE", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
-  // "EXPR" to listOf("EXPR", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
 )
 
 val Token.Companion.LOOKUP_OP_TO_ARITY_TYPE: Map<String, String> get() = mapOf(
