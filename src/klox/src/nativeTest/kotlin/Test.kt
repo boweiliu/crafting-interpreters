@@ -60,4 +60,10 @@ class IntegrationTest {
     val (_, errorsSoFar) = runAll("true and not false")
     errorsSoFar.shouldHaveSize(0)
   }
+
+  @Test
+  fun testItShowsParsingErrors() {
+    val (_, errorsSoFar) = runAll("&&")
+    errorsSoFar.shouldHaveSize(1)
+  }
 }

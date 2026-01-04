@@ -9,7 +9,7 @@ fun runInterpreter(
 ): Unit {
   val dataStack: ArrayDeque<Any?> = ArrayDeque()
   inputTokens.forEach { tok ->
-    println("dataStack $dataStack op $tok")
+    println("DEBUGGG dataStack $dataStack op $tok")
     when (tok) {
       is CongealedToken.RawToken -> dataStack.push(tok.tt)
       is CongealedToken.ParsingToken -> {
