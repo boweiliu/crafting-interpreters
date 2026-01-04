@@ -73,19 +73,30 @@ sealed interface LiteralVal {
   data class StringVal(val v: String): LiteralVal
   data class IntVal(val v: Int): LiteralVal
   data class DoubleVal(val v: Double): LiteralVal
-  val vl get(): Any {
+  data class BooleanVal(val v: Boolean): LiteralVal
+  object NullVal: LiteralVal
+  val vl get(): Any? {
     return when(this) {
       is StringVal -> this.v
       is IntVal -> this.v
       is DoubleVal -> this.v
+      is BooleanVal -> this.v
+      is NullVal -> null
+    }
+  }
+  fun repr(): String {
+    return when(this) {
+      is StringVal -> "\"" + this.v + "\""
+      else -> this.vl.toString()
     }
   }
 
   fun isNumeric(): Boolean = (this is IntVal || this is DoubleVal)
+
   fun toDoubleOrNull(): Double? = when (this) {
     is IntVal -> this.v.toDouble()
     is DoubleVal -> this.v
-    is StringVal -> null
+    else -> null
   }
   fun toDouble(): Double = this.toDoubleOrNull()!!
 }
@@ -133,7 +144,7 @@ val Token.Companion.LOOKUP_ALPHA_TO_TOKEN: Map<String, TokenType>
     "AND" to TokenType.AND,
     "OR" to TokenType.OR,
     "NOT" to TokenType.NOT,
-    "TRUE" to TokenType.TRUE,
+    "TRUE" to TokenType.TRUE, // hmm how to populate LiteralVal here too? or no?
     "FALSE" to TokenType.FALSE,
     "NIL" to TokenType.NIL,
     "PRINT" to TokenType.PRINT,
@@ -150,3 +161,12 @@ val Token.Companion.LOOKUP_ALPHA_TO_TOKEN: Map<String, TokenType>
     "THIS" to TokenType.THIS,
     "SUPER" to TokenType.SUPER,
   )
+
+fun TokenType.toLiteralValOrNull() {
+  when (this) {
+    TokenType.TRUE -> LiteralVal.BooleanVal(true)
+    TokenType.FALSE -> LiteralVal.BooleanVal(false)
+    TokenType.NIL -> LiteralVal.NullVal
+    else -> null
+  }
+}

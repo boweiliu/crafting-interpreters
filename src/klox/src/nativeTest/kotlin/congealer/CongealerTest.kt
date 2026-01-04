@@ -154,6 +154,16 @@ class ComputeActionDatasTest {
   }
 
   @Test
+  fun itSimulatesForBool() {
+    val results = simulate(Token.TTL(TokenType.TRUE, TokenType.EOF))
+    results.shouldHaveSize(3)
+    results.shouldBe(listOf(
+      Token.TT(TokenType.TRUE), CongealedToken.TT("LITERAL", 1),
+      Token.TT(TokenType.EOF)
+    ))
+  }
+
+  @Test
   fun itSimulatesForUnary() {
     val results = simulate(Token.TTL(TokenType.MINUS, TokenType.NUMBER, TokenType.EOF))
     results.shouldHaveSize(5)

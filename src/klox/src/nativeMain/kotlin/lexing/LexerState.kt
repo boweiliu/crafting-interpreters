@@ -120,8 +120,12 @@ fun computeLexerActionDatas(
 // Compute how to handle a state transition (usually by dumping the stringbuilder data out).
 // Should not mutate oldStateData.
 fun computeForTransition(
-  oldStateData: LexerStateData, toState: LexerState, cause: Char?
+  oldStateData: LexerStateData, toState: LexerState, cause: Char? = null /* unused */
 ): LTriple<LToken?, LError?, LexerStateData?> {
+  if (oldStateData.state == toState) {
+    // no state transition
+    return LTriple()
+  }
   return when (oldStateData.state) {
     LexerState.BIGRAM,
     LexerState.DEFAULT -> 

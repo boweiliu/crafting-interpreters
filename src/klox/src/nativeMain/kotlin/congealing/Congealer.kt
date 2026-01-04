@@ -211,7 +211,11 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       CDatas.of(CStackPop(), CEmit("GROUP", 3))
     }
     "LITERAL" -> {
-      if (curr.type == TokenType.NUMBER) {
+      if (curr.type == TokenType.NUMBER ||
+          curr.type == TokenType.TRUE ||
+          curr.type == TokenType.FALSE ||
+          curr.type == TokenType.STRING ||
+          curr.type == TokenType.NIL) {
         CDatas.of(CStackReplace("LITERAL_END"), CChomp())
       } else {
         CDatas.of(CError(statePeek, curr, TokenType.NUMBER))

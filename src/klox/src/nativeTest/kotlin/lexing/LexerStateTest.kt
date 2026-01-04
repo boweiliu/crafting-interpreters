@@ -90,4 +90,24 @@ class LexerStateTest {
   }
 }
 
+class computeForTransitionTest {
+  @Test
+  fun itJustRuns() {
+    val result = computeForTransition(
+      oldStateData = LexerStateData(),
+      toState = LexerState.DEFAULT,
+    )
+    result.shouldBe(LTriple())
+  }
+
+  @Test
+  fun itMakesStrings() {
+    val result = computeForTransition(
+      oldStateData = LexerStateData(LexerState.STRING, StringBuilder("\"hello\"")),
+      toState = LexerState.DEFAULT,
+    )
+    result.shouldBe(LTriple(LToken(TokenType.STRING, "\"hello\"", LiteralVal.StringVal("hello"))))
+  }
+}
+
 

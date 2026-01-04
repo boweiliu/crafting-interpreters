@@ -9,7 +9,7 @@ fun runInterpreter(
 ): Unit {
   val dataStack: ArrayDeque<Any?> = ArrayDeque()
   inputTokens.forEach { tok ->
-    // println("dataStack $dataStack op $tok")
+    println("dataStack $dataStack op $tok")
     when (tok) {
       is CongealedToken.RawToken -> dataStack.push(tok.tt)
       is CongealedToken.ParsingToken -> {
@@ -38,7 +38,7 @@ fun runInterpreter(
       }
     }
   }
-  println(dataStack.lastOrNull().let { (it as LiteralVal).vl })
+  println(dataStack.lastOrNull().let { (it as LiteralVal).repr() })
 }
 
 val FN3_IMPL_LOOKUP: Map<TokenType, (LiteralVal, LiteralVal) -> LiteralVal> = mapOf(
