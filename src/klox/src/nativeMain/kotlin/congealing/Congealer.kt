@@ -146,32 +146,41 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
   val tokenTypeMatchSet = Token.PRECEDENCE_SET[statePeek.s]
 
   return when (statePeek.s) {
+    // ROOT : ROOT_CLOSE | ROOT_BODY
+    // (either we expect an immediate EOF or something else)
     "ROOT" -> {
-      CDatas.of(CStackReplace("MAYBE_ROOT0_CLOSE"))
-    }
-    "MAYBE_ROOT0_CLOSE" -> {
-      if (curr.type == TokenType.EOF) {
-        CDatas.of(CStackReplace("ROOT0_END"), CChomp())
-      } else {
-        CDatas.of(CStackReplace("EXPR", "ROOT_CLOSE"), CMatchFail(TokenType.EOF))
-      }
-    }
-    "ROOT0_END" -> {
-      CDatas.of(CStackPop(), CEmit("ROOT0", 1))
+      CDatas.of(CStackReplace("ROOT_CLOSE"))
     }
     "ROOT_CLOSE" -> {
       if (curr.type == TokenType.EOF) {
         CDatas.of(CStackReplace("ROOT_END"), CChomp())
       } else {
-        CDatas.of(CError(statePeek, curr, setOf(TokenType.EOF)))
+        CDatas.of(CStackReplace("ROOT_BODY"), CMatchFail(TokenType.EOF))
       }
     }
     "ROOT_END" -> {
-      CDatas.of(CStackPop(), CEmit("ROOT", 2))
+      CDatas.of(CStackPop(), CEmit("ROOT", 1))
+    }
+    // ROOT_BODY : EXPR ROOT_BODY_CLOSE
+    // we expect an EXPR followed by an EOF
+    "ROOT_BODY" -> {
+      CDatas.of(CStackReplace("EXPR", "ROOT_BODY_CLOSE"))
+    }
+    "ROOT_BODY_CLOSE" -> {
+      if (curr.type == TokenType.EOF) {
+        CDatas.of(CStackReplace("ROOT_BODY_END"), CChomp())
+      } else {
+        CDatas.of(CError(statePeek, curr, setOf(TokenType.EOF)))
+      }
+    }
+    "ROOT_BODY_END" -> {
+      CDatas.of(CStackPop(), CEmit("ROOT_BODY", 2))
     }
     "EXPR" -> {
       CDatas.of(CStackReplace("ADD"))
     }
+    // ADD : MULT ADD_MORE
+    // we expect a higher-precedence term followed by left-associating additions
     "ADD" -> {
       CDatas.of(CStackReplace("MULT", "ADD_MORE"))
     }
@@ -185,6 +194,8 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     "ADD_END" -> {
       CDatas.of(CStackPop(), CEmit("ADD", 3))
     }
+    // MULT : UNARY MULT_MORE
+    // we expect a higher-precedence term followed by left-associating additions
     "MULT" -> {
       CDatas.of(CStackReplace("UNARY", "MULT_MORE"))
     }
@@ -198,6 +209,8 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     "MULT_END" -> {
       CDatas.of(CStackPop(), CEmit("MULT", 3))
     }
+    // UNARY : UNARY GROUP | GROUP
+    // either we have one or more symbols, or a higher-precedence term
     "UNARY" -> {
       if (curr.type in tokenTypeMatchSet!!) {
         CDatas.of(CStackReplace("UNARY", "UNARY_END"), CChomp())
@@ -208,6 +221,8 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     "UNARY_END" -> {
       CDatas.of(CStackPop(), CEmit("UNARY", 2))
     }
+    // GROUP : "(" EXPR GROUP_CLOSE | LITERAL
+    // either we have paired symbols, or a higher-precedence term
     "GROUP" -> {
       if (curr.type == TokenType.LEFT_PAREN) {
         CDatas.of(CStackReplace("EXPR", "GROUP_CLOSE"), CChomp())
@@ -225,6 +240,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     "GROUP_END" -> {
       CDatas.of(CStackPop(), CEmit("GROUP", 3))
     }
+    // LITERAL is a leaf rule
     "LITERAL" -> {
       if (curr.type in tokenTypeMatchSet!!) {
         CDatas.of(CStackReplace("LITERAL_END"), CChomp())
