@@ -148,7 +148,10 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
   val tokenTypeMatchSet = Token.PRECEDENCE_TO_SYMBOL_SET[baseState]
   val nextHighestPrecedence = Token.PRECEDENCE_CHAIN["EXPR"]!![baseState]
 
-  return when (statePeek.s) {
+
+  // return ComputeActionDataHelpers(baseState).invoke(state, curr)
+
+  return when (state) {
     // ROOT : ROOT_CLOSE | ROOTBODY
     // (either we expect an immediate EOF or something else)
     "ROOT" -> {
