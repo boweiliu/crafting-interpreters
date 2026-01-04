@@ -143,7 +143,10 @@ fun CState.doesNeedToken(): Boolean = !(this.s.endsWith("_END"))
 // TODO: autogenerate this based on EBNF
 fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = null): CDatas {
 
-  val tokenTypeMatchSet = Token.PRECEDENCE_SET[statePeek.s]
+  val state = statePeek.s
+  val baseState = state.split("_")[0]
+  val tokenTypeMatchSet = Token.PRECEDENCE_TO_SYMBOL_SET[state]
+  val nextHighestPrecedence = Token.PRECEDENCE_CHAIN["EXPR"]!![baseState]
 
   return when (statePeek.s) {
     // ROOT : ROOT_CLOSE | ROOT_BODY
@@ -177,16 +180,16 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       CDatas.of(CStackPop(), CEmit("ROOT_BODY", 2))
     }
     "EXPR" -> {
-      CDatas.of(CStackReplace("ADD"))
+      CDatas.of(CStackReplace(nextHighestPrecedence!!))
     }
     // ADD : MULT ADD_MORE
     // we expect a higher-precedence term followed by left-associating additions
     "ADD" -> {
-      CDatas.of(CStackReplace("MULT", "ADD_MORE"))
+      CDatas.of(CStackReplace(nextHighestPrecedence!!, "ADD_MORE"))
     }
     "ADD_MORE" -> {
       if (curr.type in tokenTypeMatchSet!!) {
-        CDatas.of(CStackReplace("MULT", "ADD_END", "ADD_MORE"), CChomp())
+        CDatas.of(CStackReplace(nextHighestPrecedence!!, "ADD_END", "ADD_MORE"), CChomp())
       } else {
         CDatas.of(CStackPop(), CMatchFail(tokenTypeMatchSet))
       }
@@ -197,11 +200,11 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
     // MULT : UNARY MULT_MORE
     // we expect a higher-precedence term followed by left-associating additions
     "MULT" -> {
-      CDatas.of(CStackReplace("UNARY", "MULT_MORE"))
+      CDatas.of(CStackReplace(nextHighestPrecedence!!, "MULT_MORE"))
     }
     "MULT_MORE" -> {
       if (curr.type in tokenTypeMatchSet!!) {
-        CDatas.of(CStackReplace("UNARY", "MULT_END", "MULT_MORE"), CChomp())
+        CDatas.of(CStackReplace(nextHighestPrecedence!!, "MULT_END", "MULT_MORE"), CChomp())
       } else {
         CDatas.of(CStackPop(), CMatchFail(tokenTypeMatchSet))
       }
@@ -215,7 +218,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       if (curr.type in tokenTypeMatchSet!!) {
         CDatas.of(CStackReplace("UNARY", "UNARY_END"), CChomp())
       } else {
-        CDatas.of(CStackReplace("GROUP"), CMatchFail(tokenTypeMatchSet))
+        CDatas.of(CStackReplace(nextHighestPrecedence!!), CMatchFail(tokenTypeMatchSet))
       }
     }
     "UNARY_END" -> {
@@ -227,7 +230,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
       if (curr.type == TokenType.LEFT_PAREN) {
         CDatas.of(CStackReplace("EXPR", "GROUP_CLOSE"), CChomp())
       } else {
-        CDatas.of(CStackReplace("LITERAL"), CMatchFail(TokenType.LEFT_PAREN))
+        CDatas.of(CStackReplace(nextHighestPrecedence!!), CMatchFail(TokenType.LEFT_PAREN))
       }
     }
     "GROUP_CLOSE" -> {
@@ -257,7 +260,7 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
   }
 }
 
-val Token.Companion.PRECEDENCE_SET: Map<String, Set<TokenType>> get() = mapOf(
+val Token.Companion.PRECEDENCE_TO_SYMBOL_SET: Map<String, Set<TokenType>> get() = mapOf(
   "LITERAL" to TokenTypeSet(
     TokenType.NUMBER, TokenType.TRUE, TokenType.FALSE, TokenType.STRING, TokenType.NIL),
   "MULT_MORE" to TokenTypeSet(
@@ -267,3 +270,12 @@ val Token.Companion.PRECEDENCE_SET: Map<String, Set<TokenType>> get() = mapOf(
   "UNARY" to TokenTypeSet(
     TokenType.MINUS, TokenType.BANG, TokenType.NOT),
 )
+
+fun <T> List<T>.toChain() : Map<T, T> =
+  if (this.size <= 1) mapOf()
+  else this.dropLast(1).mapIndexed { idx, el -> Pair(el, this[idx + 1]) }.toMap()
+
+val Token.Companion.PRECEDENCE_CHAIN: Map<String, Map<String, String>> get() = mapOf(
+  "EXPR" to listOf("EXPR", "ADD", "MULT", "UNARY", "GROUP", "LITERAL").toChain()
+)
+    

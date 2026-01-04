@@ -87,6 +87,13 @@ class UtilsTest() {
     it.push(4)
     it.toList().shouldBe(listOf(1,2,3,4))
   }
+
+  @Test
+  fun toChainWorks() {
+    val data = listOf(1,2,3)
+    val results = data.toChain()
+    results.shouldBe(mapOf(1 to 2, 2 to 3))
+  }
 }
 
 class ComputeActionDatasTest {
