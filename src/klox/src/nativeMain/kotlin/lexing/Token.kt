@@ -17,33 +17,33 @@ data class Token(
 
 enum class TokenType {
   // literals
-  STRING, // done
+  STRING,
   IDENTIFIER,
-  NUMBER, // done
-  COMMENT, // done
+  NUMBER,
+  COMMENT,
 
-  COMMA, // done
-  DOT, // done
-  SEMICOLON, // done
+  COMMA,
+  DOT,
+  SEMICOLON,
 
-  PLUS, // done
-  MINUS, // done
-  STAR, // done
-  SLASH, // done
-  PERCENT, // done
-  BANG, // done
+  PLUS,
+  MINUS,
+  STAR,
+  SLASH,
+  PERCENT,
+  BANG,
 
-  EQUAL, // done
-  BANG_EQUAL, // done
-  EQUAL_EQUAL, // done
-  LESS_THAN, // done
-  LESS_THAN_EQUAL, // done
-  GREATER_THAN, // done
-  GREATER_THAN_EQUAL, // done
-  LEFT_PAREN, // done
-  RIGHT_PAREN, // done
-  LEFT_BRACE, // done
-  RIGHT_BRACE, // done
+  EQUAL,
+  BANG_EQUAL,
+  EQUAL_EQUAL,
+  LESS_THAN,
+  LESS_THAN_EQUAL,
+  GREATER_THAN,
+  GREATER_THAN_EQUAL,
+  LEFT_PAREN,
+  RIGHT_PAREN,
+  LEFT_BRACE,
+  RIGHT_BRACE,
 
   AND,
   OR,
@@ -66,7 +66,7 @@ enum class TokenType {
   THIS,
   SUPER,
 
-  EOF, // done
+  EOF,
 }
 
 sealed class LiteralVal(val typ: String) {

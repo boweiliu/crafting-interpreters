@@ -148,8 +148,50 @@ fun computeActionDatas(statePeek: CState, curr: Token, statePeek2: CState? = nul
   val tokenTypeMatchSet = Token.PRECEDENCE_TO_SYMBOL_SET[baseState]
   val nextHighestPrecedence = Token.PRECEDENCE_CHAIN["EXPR"]!![baseState]
 
-
   // return ComputeActionDataHelpers(baseState).invoke(state, curr)
+
+    // ROOT : ROOT_CLOSE | ROOTBODY
+    //        ROOT_CLOSE : EOF
+    // ROOTBODY : EXPR ROOTBODY_CLOSE
+    //                 ROOTBODY_CLOSE : EOF
+
+// change this to
+
+    // ROOT : GLBLSCOPEBLOCK EXPR? EOF
+    // GLBLSCOPEBLOCK : GLBLLINE *
+    // FNSCOPEBLOCK   : FNLINE *
+    // CTRLSCOPEBLOCK : CTRLLINE *
+
+    // GLBLLINE  : CLASSDECLSTMT | FNLINE
+    // FNLINE    : DECLSTMT | FNDECLSTMT | CTRLLINE
+    // CTRLLINE  : EMPTYSTMT | EXPRSTMT | PRINTSTMT | BRACESTMT | IFSTMT | WHILESTMT | FORSTMT
+
+    // DECLSTMT  : "var" LVALUE "=" EXPR ";"
+    // FNDECLSTMT  : "fn" ID? "(" ARGS ")" "{" FNSCOPEBLOCK "}"
+
+    // EMPTYSTMT : ";"
+    // EXPRSTMT  : EXPR ";"
+    // PRINTSTMT : "print" EXPR ";"
+    // BRACESTMT : "{" CTRLSCOPEBLOCK "}"
+    // IFSTMT    : "if" "(" EXPR ")" "{" CTRLSCOPEBLOCK "}" MAYBEELSE
+    //   MAYBEELSE : "else" "{" CTRLSCOPEBLOCK "}"
+
+/*
+ * aaargh. to implement this we have to do a SHUNT operation on our stack
+ * imagine: sitting on the stack are: DECLSTMT, DECLSTMT, and we just finished putting EXPR
+ * now we are looking at the next char. if it's a semicolon, we'd like to make EXPR to EXPRSTMT
+ * however, if it's EOF, we actually need to emit a GLBLLINE_END(n=2) and then put expr back
+ * i.e. rollout looks like
+     DECLSTMT DECLSTMT EXPR (emitted | incoming) ROOTBODY_EXPECTEXPR GLBLSCOPEBLOCK_END GLBLSCOPEBLOCK_MORE EXPECT_SEMICOLON
+     DECLSTMT DECLSTMT (EXPR SHUNT) | ROOTBODY_EXPECTEXPR GLBLSCOPEBLOCK_END GLBLSCOPEBLOCK_MORE SHUNT_1
+     DECLSTMT DECLSTMT (EXPR SHUNT) | ROOTBODY_EXPECTEXPR GLBLSCOPEBLOCK_END SHUNT_2
+     DECLSTMT DECLSTMT (EXPR SHUNT) | ROOTBODY_EXPECTEXPR SHUNT_3 GLBLSCOPEBLOCK_END
+     DECLSTMT DECLSTMT (EXPR SHUNT) GLBLSCOPEBLOCK | ROOTBODY_EXPECTEXPR SHUNT_3 
+     DECLSTMT DECLSTMT (EXPR SHUNT) GLBLSCOPEBLOCK (UNSHUNT) | ROOTBODY_EXPECTEXPR SHUNT_4
+     DECLSTMT DECLSTMT (EXPR SHUNT) GLBLSCOPEBLOCK (UNSHUNT) | ROOTBODY_EXPECTEXPR 
+     DECLSTMT DECLSTMT EXPR SHUNT | EXPECT_EOF
+ */
+
 
   return when (state) {
     // ROOT : ROOT_CLOSE | ROOTBODY
