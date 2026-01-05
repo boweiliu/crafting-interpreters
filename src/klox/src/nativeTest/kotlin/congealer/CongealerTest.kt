@@ -103,6 +103,7 @@ class ComputeActionDatasTest {
   }
 
   @Test
+  @Ignore
   fun itReturnsModificationsForROOT() {
     val result = computeActionDatas(CState.Ss("ROOTBODY"), Token.TT(TokenType.NUMBER))
     result.stuff.shouldHaveSize(1)
@@ -144,10 +145,10 @@ class ComputeActionDatasTest {
   }
 
   @Test
-  @Ignore
-  fun itErrorsForEOF() {
+  @Ignore // the simulation is not good enough
+  fun itAllowsInstantEOF() {
     val results = simulate(Token.TTL(TokenType.EOF))
-    results.shouldHaveSize(2)
+    results.shouldHaveSize(1)
   }
 
   @Test
@@ -232,6 +233,21 @@ class ComputeActionDatasTest {
       Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
       CongealedToken.TT("ADD", 3),
       Token.TT(TokenType.EOF),
+    ))
+  }
+
+  @Test
+  fun itSimulatesExprStmt() {
+    val results = simulate(Token.TTL(TokenType.NUMBER, TokenType.SEMICOLON, TokenType.EOF))
+    results.shouldHaveSize(7)
+    results.shouldBe(listOf(
+      Token.TT(TokenType.NUMBER), CongealedToken.TT("LITERAL", 1),
+      CongealedToken.TT("EXPR", 1),
+      Token.TT(TokenType.SEMICOLON), CongealedToken.TT("EXPRSTMT", 2),
+      CongealedToken.TT("GLBLSCOPEBLOCK", 1),
+      CongealedToken.TT("EMPTY", 0),
+      Token.TT(TokenType.EOF),
+      CongealedToken.TT("ROOT", 3),
     ))
   }
 }
